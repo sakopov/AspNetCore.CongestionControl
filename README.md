@@ -7,15 +7,9 @@ This library provides a set of middleware components designed to help maintain A
 
 > Note, the rate limiting methods presented here are based on work outlined in Stripe's Engineering blog post - [Scaling your API with rate limiters](https://stripe.com/blog/rate-limiters) - with a few trivial modifications.
 
-**This library is a work in progress and hasn't yet been released.**
-
 ## Installation
 
-Install [AspNetCore.CongestionControl with NuGet](https://www.nuget.org/packages/AspNetCore.CongestionControl)
-
-```
-Install-Package AspNetCore.CongestionControl
-```
+**This library is a work in progress and hasn't yet been released.**
 
 ## Request Rate Limiter
 
