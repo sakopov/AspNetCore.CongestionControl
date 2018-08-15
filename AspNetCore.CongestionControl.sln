@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2047
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.CongestionControl", "src\AspNetCore.CongestionControl\AspNetCore.CongestionControl.csproj", "{C6B64EF8-5D3E-44C0-B868-582EC8A440AE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.CongestionControl.UnitTests", "test\AspNetCore.CongestionControl.UnitTests\AspNetCore.CongestionControl.UnitTests.csproj", "{192F5F8A-AF3F-4A96-A0EA-B88B7DC8F960}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCore.CongestionControl.IntegrationTests", "test\AspNetCore.CongestionControl.IntegrationTests\AspNetCore.CongestionControl.IntegrationTests.csproj", "{19ACDCC4-A223-43A5-B162-C3274126733C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCore.CongestionControl.TestApi", "test\AspNetCore.CongestionControl.TestApi\AspNetCore.CongestionControl.TestApi.csproj", "{3DB5BF0A-A1E8-456F-92A4-65131085A924}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{8B9D3F56-E977-4575-A9B3-8FB7566C1191}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6B64EF8-5D3E-44C0-B868-582EC8A440AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6B64EF8-5D3E-44C0-B868-582EC8A440AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6B64EF8-5D3E-44C0-B868-582EC8A440AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6B64EF8-5D3E-44C0-B868-582EC8A440AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{192F5F8A-AF3F-4A96-A0EA-B88B7DC8F960}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{192F5F8A-AF3F-4A96-A0EA-B88B7DC8F960}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{192F5F8A-AF3F-4A96-A0EA-B88B7DC8F960}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{192F5F8A-AF3F-4A96-A0EA-B88B7DC8F960}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19ACDCC4-A223-43A5-B162-C3274126733C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19ACDCC4-A223-43A5-B162-C3274126733C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19ACDCC4-A223-43A5-B162-C3274126733C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19ACDCC4-A223-43A5-B162-C3274126733C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DB5BF0A-A1E8-456F-92A4-65131085A924}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DB5BF0A-A1E8-456F-92A4-65131085A924}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DB5BF0A-A1E8-456F-92A4-65131085A924}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DB5BF0A-A1E8-456F-92A4-65131085A924}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{192F5F8A-AF3F-4A96-A0EA-B88B7DC8F960} = {8B9D3F56-E977-4575-A9B3-8FB7566C1191}
+		{19ACDCC4-A223-43A5-B162-C3274126733C} = {8B9D3F56-E977-4575-A9B3-8FB7566C1191}
+		{3DB5BF0A-A1E8-456F-92A4-65131085A924} = {8B9D3F56-E977-4575-A9B3-8FB7566C1191}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CE87F9D8-5AA6-41DF-BFB9-8C4D5DFC1BA3}
+	EndGlobalSection
+EndGlobal
