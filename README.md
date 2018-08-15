@@ -7,6 +7,8 @@ This library provides a set of middleware components designed to help maintain A
 
 > Note, the rate limiting methods presented here are based on work outlined in Stripe's Engineering blog post - [Scaling your API with rate limiters](https://stripe.com/blog/rate-limiters) - with a few trivial modifications.
 
+**This is a work in progress**.
+
 ## Installation
 
 Install [AspNetCore.CongestionControl with NuGet](https://www.nuget.org/packages/AspNetCore.CongestionControl)
@@ -17,7 +19,7 @@ Install-Package AspNetCore.CongestionControl
 
 ## Request Rate Limiter
 
-The Request Rate Limiter restricts each client to *N* requests per time interval using [Token Bucket](https://en.wikipedia.org/wiki/Token_bucket) algorithm. It can allow brief traffic spikes to burst above the cap.
+The Request Rate Limiter restricts each client to *N* requests per time interval using [Token Bucket](https://en.wikipedia.org/wiki/Token_bucket) algorithm. It can allow brief traffic spikes to burst above the capacity of the bucket.
 
 There are 3 parameters that define the behavior of the Request Rate Limiter.
 
