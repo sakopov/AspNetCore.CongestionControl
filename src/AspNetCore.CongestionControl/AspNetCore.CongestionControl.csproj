@@ -4,6 +4,7 @@
     <Description>Congestion control middleware components for ASPNET Core.</Description>
     <Copyright>Copyright Sergey Akopov</Copyright>
     <VersionPrefix>1.0.0</VersionPrefix>
+    <PackageVersion>1.0.0</PackageVersion>
     <Authors>Sergey Akopov</Authors>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <AssemblyName>AspNetCore.CongestionControl</AssemblyName>

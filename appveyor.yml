@@ -1,4 +1,4 @@
-version: 1.0.{build}
+version: '$(package_version).{build}'
 pull_requests:
   do_not_increment_build_number: true
 branches:
@@ -8,6 +8,8 @@ skip_branch_with_pr: true
 image: Previous Visual Studio 2017
 configuration: Release
 platform: Any CPU
+environment:
+  package_version: '1.0.1'
 init:
 - ps: >-
     $revision = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10)
@@ -15,11 +17,8 @@ init:
 dotnet_csproj:
   patch: true
   file: '**\*.csproj'
-  version: '{version}'
-  package_version: '{version}'
-  assembly_version: '{version}'
-  file_version: '{version}'
-  informational_version: '{version}'
+  version: '$(package_version).$(APPVEYOR_BUILD_NUMBER)'
+  package_version: '$(package_version)'
 hosts:
   redis: 127.0.0.1
 install:
