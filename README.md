@@ -9,15 +9,11 @@ This library provides a set of middleware components designed to help maintain A
 
 ## Installation
 
-Install [AspNetCore.CongestionControl with NuGet](https://www.nuget.org/packages/AspNetCore.CongestionControl)
-
-```
-Install-Package AspNetCore.CongestionControl
-```
+**This library is a work in progress and hasn't yet been released.**
 
 ## Request Rate Limiter
 
-The Request Rate Limiter restricts each client to *N* requests per time interval using [Token Bucket](https://en.wikipedia.org/wiki/Token_bucket) algorithm. It can allow brief traffic spikes to burst above the cap.
+The Request Rate Limiter restricts each client to *N* requests per time interval using [Token Bucket](https://en.wikipedia.org/wiki/Token_bucket) algorithm. It can allow brief traffic spikes to burst above the capacity of the bucket.
 
 There are 3 parameters that define the behavior of the Request Rate Limiter.
 
