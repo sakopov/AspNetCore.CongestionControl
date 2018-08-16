@@ -53,3 +53,6 @@ after_test:
     redis-server --service-uninstall
 artifacts:
 - path: src\AspNetCore.CongestionControl\artifacts\**\*.*
+
+cache:
+  - C:\Users\appveyor\AppData\Local\Temp\chocolatey
