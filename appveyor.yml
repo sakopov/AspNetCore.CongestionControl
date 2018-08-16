@@ -1,0 +1,43 @@
+version: 1.0.{build}
+pull_requests:
+  do_not_increment_build_number: true
+branches:
+  only:
+  - master
+skip_branch_with_pr: true
+image: Previous Visual Studio 2017
+configuration: Release
+platform: Any CPU
+init:
+- ps: >-
+    $revision = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10)
+    $env:VERSION_SUFFIX = "ci-$revision"
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+hosts:
+  redis: 127.0.0.1
+install:
+- ps: >-
+    choco install redis-64
+    redis-server --service-install
+    redis-server --service-start
+build_script:
+- ps: >-
+    dotnet build "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-dependencies --version-suffix $env:VERSION_SUFFIX
+    dotnet build "test\AspNetCore.CongestionControl.UnitTests" -c $env:CONFIGURATION --no-dependencies --version-suffix $env:VERSION_SUFFIX
+    dotnet build "test\AspNetCore.CongestionControl.IntegrationTests" -c $env:CONFIGURATION --version-suffix $env:VERSION_SUFFIX
+after_build:
+- ps: >-
+    dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts --version-suffix $env:VERSION_SUFFIX
+test_script:
+- ps: >-
+    dotnet test "test\AspNetCore.CongestionControl.UnitTests\AspNetCore.CongestionControl.UnitTests.csproj" -c $env:CONFIGURATION --no-build
+    dotnet test "test\AspNetCore.CongestionControl.IntegrationTests\AspNetCore.CongestionControl.IntegrationTests.csproj" -c $env:CONFIGURATION --no-build
+artifacts:
+- path: src\AspNetCore.CongestionControl\artifacts\**\*.*

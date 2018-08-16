@@ -5,7 +5,7 @@ namespace AspNetCore.CongestionControl
 {
     /// <summary>
     /// This interface defines the contract for client identifier providers
-    /// responsible for extracting unique client identifier from client requests.
+    /// responsible for extracting unique client identifier from HTTP requests.
     /// </summary>
     public interface IClientIdentifierProvider
     {
