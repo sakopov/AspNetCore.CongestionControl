@@ -29,6 +29,8 @@ install:
     redis-server --service-install
 
     redis-server --service-start
+before_build:
+- ps: appveyor-retry dotnet restore -v Minimal
 build_script:
 - ps: >-
     dotnet build "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-dependencies --version-suffix $env:VERSION_SUFFIX
@@ -36,6 +38,9 @@ build_script:
     dotnet build "test\AspNetCore.CongestionControl.UnitTests" -c $env:CONFIGURATION --no-dependencies --version-suffix $env:VERSION_SUFFIX
 
     dotnet build "test\AspNetCore.CongestionControl.IntegrationTests" -c $env:CONFIGURATION --version-suffix $env:VERSION_SUFFIX
+after_build:
+- ps: >-
+    dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts --version-suffix $env:VERSION_SUFFIX
 test_script:
 - ps: >-
     dotnet test "test\AspNetCore.CongestionControl.UnitTests\AspNetCore.CongestionControl.UnitTests.csproj" -c $env:CONFIGURATION
