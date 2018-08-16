@@ -27,8 +27,6 @@ install:
     choco install redis-64
 
     redis-server --service-install
-
-    redis-server --service-start
 before_build:
 - ps: appveyor-retry dotnet restore -v Minimal
 build_script:
@@ -41,10 +39,16 @@ build_script:
 after_build:
 - ps: >-
     dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts --version-suffix $env:VERSION_SUFFIX
+before_test:
+- ps: >-
+    redis-server --service-start
 test_script:
 - ps: >-
     dotnet test "test\AspNetCore.CongestionControl.UnitTests\AspNetCore.CongestionControl.UnitTests.csproj" -c $env:CONFIGURATION
 
     dotnet test "test\AspNetCore.CongestionControl.IntegrationTests\AspNetCore.CongestionControl.IntegrationTests.csproj" -c $env:CONFIGURATION
+after_test:
+- ps: >-
+    redis-server --service-stop
 artifacts:
 - path: src\AspNetCore.CongestionControl\artifacts\**\*.*
