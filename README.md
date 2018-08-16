@@ -1,6 +1,8 @@
 AspNetCore.CongestionControl
 =======
 
+[![Build status](https://ci.appveyor.com/api/projects/status/10hsvd062bymvl0y?svg=true)](https://ci.appveyor.com/project/sakopov/aspnetcore-congestioncontrol)
+
 *Congestion control middleware components for ASPNET Core.*
 
 This library provides a set of middleware components designed to help maintain API availability and reliability via several commonly used rate limiter algorithms.
