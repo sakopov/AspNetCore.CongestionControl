@@ -55,4 +55,5 @@ artifacts:
 - path: src\AspNetCore.CongestionControl\artifacts\**\*.*
 
 cache:
-  - C:\Users\appveyor\AppData\Local\Temp\chocolatey
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
