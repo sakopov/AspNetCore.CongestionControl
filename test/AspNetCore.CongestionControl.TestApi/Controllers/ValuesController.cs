@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AspNetCore.CongestionControl.TestApi.Controllers
@@ -10,6 +11,9 @@ namespace AspNetCore.CongestionControl.TestApi.Controllers
         [HttpGet]
         public IEnumerable<string> Get()
         {
+            // Simulate work
+            Thread.Sleep(1000);
+
             return new string[] { "value1", "value2" };
         }
     }
