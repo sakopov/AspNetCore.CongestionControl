@@ -13,7 +13,7 @@ environment:
 init:
 - ps: |
     git config --global core.autocrlf true
-    
+
     $revision = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10)
     $env:VERSION_SUFFIX = "ci-$revision"
 dotnet_csproj:
@@ -37,6 +37,9 @@ build_script:
     dotnet build "test\AspNetCore.CongestionControl.UnitTests" -c $env:CONFIGURATION --no-dependencies --version-suffix $env:VERSION_SUFFIX -v Minimal
 
     dotnet build "test\AspNetCore.CongestionControl.IntegrationTests" -c $env:CONFIGURATION --version-suffix $env:VERSION_SUFFIX -v Minimal
+on_finish:
+- ps: >-
+    $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 after_build:
 - ps: >-
     dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts --version-suffix $env:VERSION_SUFFIX -v Minimal
