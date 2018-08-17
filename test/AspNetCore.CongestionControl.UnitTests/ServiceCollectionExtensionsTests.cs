@@ -174,7 +174,7 @@ namespace AspNetCore.CongestionControl.UnitTests
 
             It should_set_redis_server_configuration_in_congestion_control_configuration = () =>
             {
-                _configuration.RedisServerConfiguration.ShouldNotBeNull();
+                _configuration.RedisConfiguration.ShouldNotBeNull();
             };
 
             It should_add_redis_connection_multiplexer_to_the_service_collection = () =>
@@ -215,7 +215,7 @@ namespace AspNetCore.CongestionControl.UnitTests
 
             It should_not_set_redis_server_configuration_in_congestion_control_configuration = () =>
             {
-                _configuration.RedisServerConfiguration.ShouldBeNull();
+                _configuration.RedisConfiguration.ShouldBeNull();
             };
 
             It should_not_add_redis_connection_multiplexer_to_the_service_collection = () =>

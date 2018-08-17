@@ -60,10 +60,10 @@ namespace AspNetCore.CongestionControl
                 collection.AddSingleton(provider => options.ConcurrentRequestLimiterConfiguration);
             }
 
-            if (options.RedisServerConfiguration != null)
+            if (options.RedisConfiguration != null)
             {
-                collection.AddSingleton(provider => options.RedisServerConfiguration);
-                collection.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(options.RedisServerConfiguration.Options));
+                collection.AddSingleton(provider => options.RedisConfiguration);
+                collection.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(options.RedisConfiguration.Options));
                 collection.AddTransient<IConcurrentRequestsTracker, RedisConcurrentRequestsTracker>();
                 collection.AddTransient<ITokenBucketConsumer, RedisTokenBucketConsumer>();
             }

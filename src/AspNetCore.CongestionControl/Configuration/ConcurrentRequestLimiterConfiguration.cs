@@ -1,4 +1,6 @@
-﻿namespace AspNetCore.CongestionControl.Configuration
+﻿using System;
+
+namespace AspNetCore.CongestionControl.Configuration
 {
     /// <summary>
     /// This class implements configuration options for concurrent requests limiter.
@@ -23,19 +25,29 @@
         /// </summary>
         public string KeysPrefix { get; set; } = "concurrent_request_limiter";
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Validates configuration options.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
         internal override void Validate()
         {
             if (Capacity <= 0)
             {
-                throw new ConcurrentRequestLimiterConfigurationException(
+                throw new ArgumentOutOfRangeException(nameof(Capacity), 
                     "Capacity must be greater than 0.");
             }
 
             if (RequestTimeToLive <= 0)
             {
-                throw new ConcurrentRequestLimiterConfigurationException(
+                throw new ArgumentOutOfRangeException(nameof(RequestTimeToLive), 
                     "Request time-to-live must be greater than 0.");
+            }
+
+            if (string.IsNullOrEmpty(KeysPrefix))
+            {
+                throw new ArgumentNullException(nameof(KeysPrefix), 
+                    "Keys prefix must be provided.");
             }
         }
     }

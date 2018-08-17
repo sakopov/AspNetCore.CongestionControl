@@ -113,7 +113,7 @@ namespace AspNetCore.CongestionControl
             {
                 _logger.LogWarning(ex, "Unhandled Redis exception: {0}", ex.Message);
 
-                // Fail open so Redis outage doesn't take down the everything
+                // Fail open so Redis outage doesn't take down everything
                 // with it.
                 return true;
             }

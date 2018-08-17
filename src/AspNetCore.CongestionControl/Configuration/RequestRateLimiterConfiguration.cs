@@ -1,4 +1,6 @@
-﻿namespace AspNetCore.CongestionControl.Configuration
+﻿using System;
+
+namespace AspNetCore.CongestionControl.Configuration
 {
     /// <summary>
     /// This class implements configuration options for request rate limiter.
@@ -29,25 +31,35 @@
         /// </summary>
         public string KeysPrefix { get; set; } = "request_rate_limiter";
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Validates configuration options.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
         internal override void Validate()
         {
             if (Interval <= 0)
             {
-                throw new RequestRateLimiterConfigurationException(
-                    "Interval must be greater than 0 for request rate limiter.");
+                throw new ArgumentOutOfRangeException(nameof(Interval), 
+                    "Interval must be greater than 0.");
             }
 
             if (AverageRate <= 0)
             {
-                throw new RequestRateLimiterConfigurationException(
-                    "Average rate must be greater than 0 for request rate limiter.");
+                throw new ArgumentOutOfRangeException(nameof(AverageRate),
+                    "Average rate must be greater than 0.");
             }
 
             if (Bursting <= 0)
             {
-                throw new RequestRateLimiterConfigurationException(
-                    "Bursting must be greater than 0 for request rate limiter.");
+                throw new ArgumentOutOfRangeException(nameof(Bursting),
+                    "Bursting must be greater than 0.");
+            }
+
+            if (string.IsNullOrEmpty(KeysPrefix))
+            {
+                throw new ArgumentNullException(nameof(KeysPrefix),
+                    "Keys prefix must be provided.");
             }
         }
     }

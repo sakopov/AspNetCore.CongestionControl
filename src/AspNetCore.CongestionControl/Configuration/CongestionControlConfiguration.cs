@@ -11,7 +11,7 @@ namespace AspNetCore.CongestionControl.Configuration
         /// <summary>
         /// Gets the Redis configuration.
         /// </summary>
-        internal RedisServerConfiguration RedisServerConfiguration { get; private set; }
+        internal RedisConfiguration RedisConfiguration { get; private set; }
 
         /// <summary>
         /// Gets the request rate limiter configuration.
@@ -100,11 +100,11 @@ namespace AspNetCore.CongestionControl.Configuration
         /// </param>
         public void AddRedisStorage(string connection)
         {
-            var config = new RedisServerConfiguration(connection);
+            var config = new RedisConfiguration(connection);
 
             config.Validate();
 
-            RedisServerConfiguration = config;
+            RedisConfiguration = config;
         }
 
         /// <summary>
