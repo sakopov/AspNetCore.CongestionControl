@@ -51,16 +51,10 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 }).Await();
             };
 
-            It should_allow_2_out_of_3_requests = () =>
-            {
-                _response.Count(response => response.StatusCode == HttpStatusCode.OK)
-                    .ShouldEqual(2);
-            };
-
             It should_not_allow_1_out_of_3_requests = () =>
             {
-                _response.Count(response => response.StatusCode == (HttpStatusCode)429)
-                    .ShouldEqual(1);
+                _response.SingleOrDefault(resp => resp.StatusCode == (HttpStatusCode)429)
+                    .ShouldNotBeNull();
             };
 
             const int AsyncRequests = 3;

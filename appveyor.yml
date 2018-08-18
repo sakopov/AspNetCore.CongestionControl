@@ -12,6 +12,7 @@ environment:
   package_version: '1.0.1'
 init:
 - ps: |
+    git config --global core.autocrlf true
     $revision = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10)
     $env:VERSION_SUFFIX = "ci-$revision"
 dotnet_csproj:
