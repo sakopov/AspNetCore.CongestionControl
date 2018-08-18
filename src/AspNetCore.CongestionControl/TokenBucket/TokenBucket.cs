@@ -55,20 +55,6 @@ namespace AspNetCore.CongestionControl.TokenBucket
         }
 
         /// <summary>
-        /// Gets the number of elapsed intervals between now and last bucket
-        /// update.
-        /// </summary>
-        /// <returns>
-        /// The number of intervals.
-        /// </returns>
-        private int GetIntervalsSinceLastsUpdate()
-        {
-            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            return (int)(now - _lastUpdateTimestamp) / _interval;
-        }
-
-        /// <summary>
         /// Reduces available tokens in the bucket by the requested amount.
         /// </summary>
         /// <param name="requestedTokens">
@@ -108,6 +94,20 @@ namespace AspNetCore.CongestionControl.TokenBucket
             _availableTokens -= requestedTokens;
 
             return Task.FromResult(TokenConsumeResponse.Conforming(_availableTokens));
+        }
+
+        /// <summary>
+        /// Gets the number of elapsed intervals between now and last bucket
+        /// update.
+        /// </summary>
+        /// <returns>
+        /// The number of intervals.
+        /// </returns>
+        private int GetIntervalsSinceLastsUpdate()
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            return (int)(now - _lastUpdateTimestamp) / _interval;
         }
     }
 }
