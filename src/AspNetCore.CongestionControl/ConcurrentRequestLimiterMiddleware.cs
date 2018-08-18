@@ -91,7 +91,7 @@ namespace AspNetCore.CongestionControl
 
             if (!isAllowed)
             {
-                _logger.LogInformation("The request \"{0}\" for client \"{1}\" was not allowed because the client has exceeded concurrent request limiter capacity.", requestId, clientId);
+                _logger.LogInformation("The request {0} for client {1} was not allowed because the client has exceeded concurrent request limiter capacity.", requestId, clientId);
 
                 context.Response.ContentType = "application/json";
                 context.Response.StatusCode = _configuration.HttpStatusCode;

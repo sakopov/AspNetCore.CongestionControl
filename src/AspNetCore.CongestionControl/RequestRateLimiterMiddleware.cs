@@ -86,7 +86,7 @@ namespace AspNetCore.CongestionControl
 
             if (!response.IsAllowed)
             {
-                _logger.LogInformation("The request for client \"{0}\" was not allowed because the client has exceeded request rate limiter capacity.", clientId);
+                _logger.LogInformation("The request for client {0} was not allowed because the client has exceeded request rate limiter capacity.", clientId);
 
                 context.Response.ContentType = "application/json";
                 context.Response.StatusCode = _configuration.HttpStatusCode;

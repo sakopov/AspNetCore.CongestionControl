@@ -12,7 +12,7 @@ namespace AspNetCore.CongestionControl.TestApi.Controllers
         public IEnumerable<string> Get()
         {
             // Simulate work
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
 
             return new string[] { "value1", "value2" };
         }
