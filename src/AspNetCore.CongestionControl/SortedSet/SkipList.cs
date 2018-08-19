@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace AspNetCore.CongestionControl.SortedSet
@@ -13,20 +12,12 @@ namespace AspNetCore.CongestionControl.SortedSet
         /// <summary>
         /// The maximum number of levels in the list.
         /// </summary>
-        private const int SkipListMaxLevel = 64;
+        internal const int SkipListMaxLevel = 64;
 
         /// <summary>
-        /// The probability that any given node will have an l-level
-        /// pointer with the lowest level being level 1. Currently,
-        /// P = 1/4. More information about the randomization in Skip
-        /// Lists is @ https://eugene-eeo.github.io/blog/skip-lists.html
+        /// The node level generator implementation.
         /// </summary>
-        private const double SkipListProbability = 0.25;
-
-        /// <summary>
-        /// The randomizer.
-        /// </summary>
-        private static readonly Random Random = new Random();
+        private readonly ISkipListNodeLevelGenerator _nodeLevelGenerator;
 
         /// <summary>
         /// Gets the head node of the skip list.
@@ -49,10 +40,20 @@ namespace AspNetCore.CongestionControl.SortedSet
         public int Levels { get; private set; }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SkipList"/> class
+        /// using <see cref="SkipListNodeLevelGenerator"/> as the node
+        /// level generator.
+        /// </summary>
+        public SkipList() : this(new SkipListNodeLevelGenerator())
+        { }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SkipList"/> class.
         /// </summary>
-        public SkipList()
+        public SkipList(ISkipListNodeLevelGenerator nodeLevelGenerator)
         {
+            _nodeLevelGenerator = nodeLevelGenerator;
+
             Levels = 1;
             Length = 0;
             Head = CreateNode(0, null);
@@ -358,7 +359,15 @@ namespace AspNetCore.CongestionControl.SortedSet
             {
                 if (update[currentLevel].Levels[currentLevel].Forward == node) 
                 {
-                    update[currentLevel].Levels[currentLevel].Span += node.Levels[currentLevel].Span - 1;
+                    if (node.Levels[currentLevel].Forward != null)
+                    {
+                        update[currentLevel].Levels[currentLevel].Span += node.Levels[currentLevel].Span - 1;
+                    }
+                    else
+                    {
+                        update[currentLevel].Levels[currentLevel].Span = 0;
+                    }
+
                     update[currentLevel].Levels[currentLevel].Forward = node.Levels[currentLevel].Forward;
                 }
                 else
@@ -413,16 +422,9 @@ namespace AspNetCore.CongestionControl.SortedSet
         /// <returns>
         /// The randomly-generated level number.
         /// </returns>
-        private static int GetRandomLevel()
+        private int GetRandomLevel()
         {
-            var level = 1;
-
-            while ((Random.Next() & 0xFFFF) < SkipListProbability * 0xFFFF)
-            {
-                level += 1;
-            }
-
-            return level < SkipListMaxLevel ? level : SkipListMaxLevel;
+            return _nodeLevelGenerator.Generate(SkipListMaxLevel);
         }
     }
 }
