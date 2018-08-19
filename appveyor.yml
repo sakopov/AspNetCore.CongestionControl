@@ -62,7 +62,7 @@ install:
 #---------------------------------#
 
 before_build:
-- ps: >-
+- ps: |
     dotnet restore -v Minimal
 
 build_script:
@@ -72,7 +72,7 @@ build_script:
     dotnet build "test\AspNetCore.CongestionControl.IntegrationTests" -c $env:CONFIGURATION --no-restore $env:RELEASE_VERSION_SUFFIX -v Minimal
 
 after_build:
-- ps: >-
+- ps: |
     dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts -v Minimal
 
 #---------------------------------#
@@ -80,17 +80,16 @@ after_build:
 #---------------------------------#
 
 before_test:
-- ps: >-
+- ps: |
     redis-server --service-start
 
 test_script:
-- ps: >-
+- ps: |
     dotnet test "test\AspNetCore.CongestionControl.UnitTests\AspNetCore.CongestionControl.UnitTests.csproj" -c $env:CONFIGURATION --no-build -v Minimal
-
     dotnet test "test\AspNetCore.CongestionControl.IntegrationTests\AspNetCore.CongestionControl.IntegrationTests.csproj" -c $env:CONFIGURATION --no-build -v Minimal
 
 after_test:
-- ps: >-
+- ps: |
     redis-server --service-stop
 
     redis-server --service-uninstall
