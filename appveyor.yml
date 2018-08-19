@@ -58,6 +58,9 @@ install:
     $env:RELEASE_VERSION_SUFFIX = @{ $true = "--version-suffix $($suffix)"; $false = ""}[$suffix -ne ""]
     $env:RELEASE_VERSION = @{ $true = "$env:PACKAGE_VERSION.$($suffix)"; $false = "$env:PACKAGE_VERSION"}[$suffix -ne ""]
 
+    echo "Version is $env:RELEASE_VERSION"
+    echo "Version suffix is $env:RELEASE_VERSION_SUFFIX" 
+
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
@@ -92,7 +95,6 @@ test_script:
 after_test:
 - ps: |
     redis-server --service-stop
-
     redis-server --service-uninstall
 
 #---------------------------------#
