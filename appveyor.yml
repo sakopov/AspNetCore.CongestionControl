@@ -1,34 +1,65 @@
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+
 version: '$(package_version).{build}'
+
 pull_requests:
   do_not_increment_build_number: true
+
 branches:
   only:
   - master
-skip_branch_with_pr: true
+
+#---------------------------------#
+#    environment configuration    #
+#---------------------------------#
+
 image: Visual Studio 2017
+
 configuration: Release
+
 platform: Any CPU
+
 environment:
   package_version: '1.0.1'
+
+nuget:
+  project_feed: true
+  disable_publish_on_pr: true
+
 init:
 - ps: |
     git config --global core.autocrlf true
     $revision = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10)
     $env:VERSION_SUFFIX = "ci-$revision"
+
 dotnet_csproj:
   patch: true
   file: '**\*.csproj'
   version: '$(package_version).$(APPVEYOR_BUILD_NUMBER)'
   package_version: '$(package_version)'
+
 hosts:
   redis: 127.0.0.1
+
+cache:
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+
 install:
 - ps: >-
     choco install redis-64
 
     redis-server --service-install
+
+#---------------------------------#
+#       build configuration       #
+#---------------------------------#
+
 before_build:
 - ps: dotnet restore -v Minimal
+
 build_script:
 - ps: >-
     dotnet build "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-dependencies --no-restore --version-suffix $env:VERSION_SUFFIX -v Minimal
@@ -36,25 +67,35 @@ build_script:
     dotnet build "test\AspNetCore.CongestionControl.UnitTests" -c $env:CONFIGURATION --no-dependencies --no-restore --version-suffix $env:VERSION_SUFFIX -v Minimal
 
     dotnet build "test\AspNetCore.CongestionControl.IntegrationTests" -c $env:CONFIGURATION --no-restore --version-suffix $env:VERSION_SUFFIX -v Minimal
+
 after_build:
 - ps: >-
     dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts --version-suffix $env:VERSION_SUFFIX -v Minimal
+
+#---------------------------------#
+#       tests configuration       # 
+#---------------------------------#
+
 before_test:
 - ps: >-
     redis-server --service-start
+
 test_script:
 - ps: >-
     dotnet test "test\AspNetCore.CongestionControl.UnitTests\AspNetCore.CongestionControl.UnitTests.csproj" -c $env:CONFIGURATION --no-build -v Minimal
 
     dotnet test "test\AspNetCore.CongestionControl.IntegrationTests\AspNetCore.CongestionControl.IntegrationTests.csproj" -c $env:CONFIGURATION --no-build -v Minimal
+
 after_test:
 - ps: >-
     redis-server --service-stop
 
     redis-server --service-uninstall
+
+#---------------------------------#
+#      artifacts configuration    #
+#---------------------------------#
+
 artifacts:
 - path: src\AspNetCore.CongestionControl\artifacts\**\*.*
-
-cache:
-  - C:\ProgramData\chocolatey\bin -> appveyor.yml
-  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+  name: NuGet
