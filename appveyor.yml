@@ -46,7 +46,7 @@ cache:
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
 
 install:
-- ps: >-
+- ps: |
     choco install redis-64
 
     redis-server --service-install
