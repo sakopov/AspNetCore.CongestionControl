@@ -31,12 +31,6 @@ nuget:
 init:
 - ps: |
     git config --global core.autocrlf true
-    
-    $branch = @{ $true = $env:APPVEYOR_REPO_BRANCH; $false = $(git symbolic-ref --short -q HEAD) }[$env:APPVEYOR_REPO_BRANCH -ne $NULL];
-    $revision = @{ $true = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10); $false = "local" }[$env:APPVEYOR_BUILD_NUMBER -ne $NULL];
-    $suffix = @{ $true = ""; $false = "$($branch.Substring(0, [math]::Min(10,$branch.Length)))-$revision"}[$branch -eq "master" -and $revision -ne "local"]
-    $env:RELEASE_VERSION_SUFFIX = @{ $true = "--version-suffix $($suffix)"; $false = ""}[$suffix -ne ""]
-    $env:RELEASE_VERSION = @{ $true = "$env:PACKAGE_VERSION.$($suffix)"; $false = "$env:PACKAGE_VERSION"}[$suffix -ne ""]
 
 dotnet_csproj:
   patch: true
@@ -57,12 +51,19 @@ install:
 
     redis-server --service-install
 
+    $branch = @{ $true = $env:APPVEYOR_REPO_BRANCH; $false = $(git symbolic-ref --short -q HEAD) }[$env:APPVEYOR_REPO_BRANCH -ne $NULL];
+    $revision = @{ $true = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10); $false = "local" }[$env:APPVEYOR_BUILD_NUMBER -ne $NULL];
+    $suffix = @{ $true = ""; $false = "$($branch.Substring(0, [math]::Min(10,$branch.Length)))-$revision"}[$branch -eq "master" -and $revision -ne "local"]
+    $env:RELEASE_VERSION_SUFFIX = @{ $true = "--version-suffix $($suffix)"; $false = ""}[$suffix -ne ""]
+    $env:RELEASE_VERSION = @{ $true = "$env:PACKAGE_VERSION.$($suffix)"; $false = "$env:PACKAGE_VERSION"}[$suffix -ne ""]
+
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
 
 before_build:
-- ps: dotnet restore -v Minimal
+- ps: >-
+    dotnet restore -v Minimal
 
 build_script:
 - ps: >-
