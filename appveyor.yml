@@ -2,7 +2,7 @@
 #      general configuration      #
 #---------------------------------#
 
-version: '$(package_version).{build}'
+version: '{build}'
 
 pull_requests:
   do_not_increment_build_number: true
@@ -31,14 +31,18 @@ nuget:
 init:
 - ps: |
     git config --global core.autocrlf true
-    $revision = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10)
-    $env:VERSION_SUFFIX = "ci-$revision"
+    
+    $branch = @{ $true = $env:APPVEYOR_REPO_BRANCH; $false = $(git symbolic-ref --short -q HEAD) }[$env:APPVEYOR_REPO_BRANCH -ne $NULL];
+    $revision = @{ $true = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10); $false = "local" }[$env:APPVEYOR_BUILD_NUMBER -ne $NULL];
+    $suffix = @{ $true = ""; $false = "$($branch.Substring(0, [math]::Min(10,$branch.Length)))-$revision"}[$branch -eq "master" -and $revision -ne "local"]
+    $env:RELEASE_VERSION_SUFFIX = @{ $true = "--version-suffix $($suffix)"; $false = ""}[$suffix -ne ""]
+    $env:RELEASE_VERSION = @{ $true = "$env:PACKAGE_VERSION.$($suffix)"; $false = "$env:PACKAGE_VERSION"}[$suffix -ne ""]
 
 dotnet_csproj:
   patch: true
   file: '**\*.csproj'
-  version: '$(package_version).$(APPVEYOR_BUILD_NUMBER)'
-  package_version: '$(package_version)'
+  version: '$(RELEASE_VERSION)'
+  package_version: '$(PACKAGE_VERSION)'
 
 hosts:
   redis: 127.0.0.1
@@ -62,15 +66,15 @@ before_build:
 
 build_script:
 - ps: >-
-    dotnet build "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-dependencies --no-restore --version-suffix $env:VERSION_SUFFIX -v Minimal
+    dotnet build "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-dependencies --no-restore $env:RELEASE_VERSION_SUFFIX -v Minimal
 
-    dotnet build "test\AspNetCore.CongestionControl.UnitTests" -c $env:CONFIGURATION --no-dependencies --no-restore --version-suffix $env:VERSION_SUFFIX -v Minimal
+    dotnet build "test\AspNetCore.CongestionControl.UnitTests" -c $env:CONFIGURATION --no-dependencies --no-restore $env:RELEASE_VERSION_SUFFIX -v Minimal
 
-    dotnet build "test\AspNetCore.CongestionControl.IntegrationTests" -c $env:CONFIGURATION --no-restore --version-suffix $env:VERSION_SUFFIX -v Minimal
+    dotnet build "test\AspNetCore.CongestionControl.IntegrationTests" -c $env:CONFIGURATION --no-restore $env:RELEASE_VERSION_SUFFIX -v Minimal
 
 after_build:
 - ps: >-
-    dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts --version-suffix $env:VERSION_SUFFIX -v Minimal
+    dotnet pack "src\AspNetCore.CongestionControl" -c $env:CONFIGURATION --no-build --include-symbols -o artifacts -v Minimal
 
 #---------------------------------#
 #       tests configuration       # 
