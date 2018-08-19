@@ -104,3 +104,15 @@ after_test:
 artifacts:
 - path: src\AspNetCore.CongestionControl\artifacts\**\*.*
   name: NuGet
+
+#---------------------------------#
+#     deployment configuration    #
+#---------------------------------#
+
+deploy:
+  - provider: NuGet
+    name: Production
+    api_key:
+      secure: ZyNMTHl83Q+jbtyCaweu6ULT7jo2dGq+lF7TibDcVyE1aH9KKvdmf9FEHkRQHVCL
+    on:
+      appveyor_repo_tag: true 
