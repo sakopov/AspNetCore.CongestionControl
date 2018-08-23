@@ -236,4 +236,4 @@ In addition, rate limiters should be one of the first middleware components exec
 
 ### Client-Specific Rate Limits
 
-Client-specific rate limits are currently not supported and it's not entirely sure if they'll ever be supported.
+Client-specific rate limits are currently not supported and there are currently no plans to introduce this functionality.
