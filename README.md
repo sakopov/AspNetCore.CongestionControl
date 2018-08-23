@@ -136,7 +136,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-## HTTP Response Formatting
+## HTTP Response Status Code
 
 If a request is rate-limited by any of the middleware, the client will receive a response with HTTP status code **429 / Too Many Requests** (unless configured otherwise) and content type matching that of the original request. It's possible to provide a custom status code via `HttpStatusCode` property.
 
@@ -155,7 +155,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-## Custom HTTP Response Formatting
+## HTTP Response Formatting
 
 If you need to customize the rate limit response, you can do so my implementing `IHttpResponseFormatter`. The example below shows HTTP response formatter which adds `X-RateLimit-Limit` and `X-RateLimit-Remaining` headers to the response.
 
