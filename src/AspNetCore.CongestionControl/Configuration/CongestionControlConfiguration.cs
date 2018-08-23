@@ -1,10 +1,34 @@
-﻿using System;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="CongestionControlConfiguration.cs">
+//   Copyright (c) 2018 Sergey Akopov
+//   
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//   
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//   
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace AspNetCore.CongestionControl.Configuration
 {
+    using System;
+
     /// <summary>
-    /// This class implements configuration options for all congestion control
-    /// middlewares.
+    /// The top-level configuration class responsible for configuring
+    /// all components of the library.
     /// </summary>
     public class CongestionControlConfiguration
     {
@@ -24,9 +48,14 @@ namespace AspNetCore.CongestionControl.Configuration
         internal ConcurrentRequestLimiterConfiguration ConcurrentRequestLimiterConfiguration { get; private set; }
         
         /// <summary>
-        /// Gets the client identifier provider.
+        /// Gets or sets the client identifier provider.
         /// </summary>
-        internal IClientIdentifierProvider ClientIdentifierProvider { get; private set; }
+        internal IClientIdentifierProvider ClientIdentifierProvider { get; set; }
+
+        /// <summary>
+        /// Gets or sets the HTTP response formatter.
+        /// </summary>
+        internal IHttpResponseFormatter HttpResponseFormatter { get; set; }
 
         /// <summary>
         /// Gets or sets the HTTP status code to return to the client when their
@@ -37,6 +66,8 @@ namespace AspNetCore.CongestionControl.Configuration
         /// <summary>
         /// Adds request rate limiter using default configuration options.
         /// </summary>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public void AddRequestRateLimiter()
         {
             var config = new RequestRateLimiterConfiguration();
@@ -52,6 +83,8 @@ namespace AspNetCore.CongestionControl.Configuration
         /// <param name="configure">
         /// The delegate to configure request rate limiter.
         /// </param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public void AddRequestRateLimiter(Action<RequestRateLimiterConfiguration> configure)
         {
             var config = new RequestRateLimiterConfiguration();
@@ -66,6 +99,8 @@ namespace AspNetCore.CongestionControl.Configuration
         /// <summary>
         /// Adds concurrent request limiter using default configuration options.
         /// </summary>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public void AddConcurrentRequestLimiter()
         {
             var config = new ConcurrentRequestLimiterConfiguration();
@@ -81,6 +116,8 @@ namespace AspNetCore.CongestionControl.Configuration
         /// <param name="configure">
         /// The delegate to configure concurrent request limiter.
         /// </param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public void AddConcurrentRequestLimiter(Action<ConcurrentRequestLimiterConfiguration> configure)
         {
             var config = new ConcurrentRequestLimiterConfiguration();
@@ -98,6 +135,7 @@ namespace AspNetCore.CongestionControl.Configuration
         /// <param name="connection">
         /// The connection string for the Redis server.
         /// </param>
+        /// <exception cref="ArgumentNullException"></exception>
         public void AddRedisStorage(string connection)
         {
             var config = new RedisConfiguration(connection);
@@ -120,23 +158,27 @@ namespace AspNetCore.CongestionControl.Configuration
         }
 
         /// <summary>
-        /// Adds header-based client identifier provider using "x-client-id" header
-        /// name to retrieve unique client identifier.
+        /// Adds custom client identifier provider.
         /// </summary>
-        public void AddHeaderBasedClientIdentifierProvider()
+        /// <param name="clientIdentifierProvider">
+        /// The implementation of <see cref="IClientIdentifierProvider"/> interface.
+        /// </param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddClientIdentifierProvider(IClientIdentifierProvider clientIdentifierProvider)
         {
-            ClientIdentifierProvider = new HeaderBasedClientIdentifierProvider();
+            ClientIdentifierProvider = clientIdentifierProvider ?? throw new ArgumentNullException(nameof(clientIdentifierProvider));
         }
 
         /// <summary>
-        /// Adds custom client identifier provider.
+        /// Adds custom HTTP response formatter.
         /// </summary>
-        /// <param name="provider">
-        /// The implementation of <see cref="IClientIdentifierProvider"/> interface.
+        /// <param name="httpResponseFormatter">
+        /// The implementation of <see cref="IHttpResponseFormatter"/> interface.
         /// </param>
-        public void AddClientIdentifierProvider(IClientIdentifierProvider provider)
+        /// <exception cref="ArgumentNullException"></exception>
+        public void AddHttpResponseFormatter(IHttpResponseFormatter httpResponseFormatter)
         {
-            ClientIdentifierProvider = provider ?? throw new ArgumentNullException(nameof(provider));
+            HttpResponseFormatter = httpResponseFormatter ?? throw new ArgumentNullException(nameof(httpResponseFormatter));
         }
     }
 }

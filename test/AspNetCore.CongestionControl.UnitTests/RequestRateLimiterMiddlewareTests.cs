@@ -1,15 +1,14 @@
-﻿using System;
-using System.Threading.Tasks;
-using AspNetCore.CongestionControl.Configuration;
-using Machine.Specifications;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Internal;
-using Moq;
-using It = Machine.Specifications.It;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Configuration;
+    using Machine.Specifications;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Logging;
+    using Moq;
+    using System;
+    using System.Threading.Tasks;
+    using It = Machine.Specifications.It;
+
     class RequestRateLimiterMiddlewareTests
     {
         [Subject(typeof(RequestRateLimiterMiddleware), "Request Rate Limiter Middleware"), Tags("Positive Test")]
@@ -28,7 +27,7 @@ namespace AspNetCore.CongestionControl.UnitTests
 
                 _tokenBucketConsumerMock
                     .Setup(mock => mock.ConsumeAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<int>()))
-                    .ReturnsAsync(new TokenConsumeResponse(true, 1));
+                    .ReturnsAsync(new ConsumeResult(true, 1, 1));
 
                 async Task Next(HttpContext httpContext)
                 {
@@ -37,11 +36,11 @@ namespace AspNetCore.CongestionControl.UnitTests
                     _isNextCalled = true;
                 }
 
-                _middleware = new RequestRateLimiterMiddleware(Next, 
-                    _configuration, 
-                    _clientIdentifierProviderMock.Object, 
-                    _tokenBucketConsumerMock.Object, 
-                    _loggerMock.Object);
+                _middleware = new RequestRateLimiterMiddleware(Next,
+                    _configuration,
+                    _clientIdentifierProviderMock.Object,
+                    _tokenBucketConsumerMock.Object,
+                    new DefaultHttpResponseFormatter());
             };
 
             Because of = () =>
@@ -54,7 +53,7 @@ namespace AspNetCore.CongestionControl.UnitTests
                 _isNextCalled.ShouldBeTrue();
             };
 
-            static bool _isNextCalled = false;
+            static bool _isNextCalled;
             static CongestionControlConfiguration _configuration;
             static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
             static Mock<ITokenBucketConsumer> _tokenBucketConsumerMock;
@@ -70,6 +69,7 @@ namespace AspNetCore.CongestionControl.UnitTests
                 _configuration = new CongestionControlConfiguration();
                 _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
                 _tokenBucketConsumerMock = new Mock<ITokenBucketConsumer>();
+                _httpResponseFormatterMock = new Mock<IHttpResponseFormatter>();
                 _loggerMock = new Mock<ILogger<RequestRateLimiterMiddleware>>();
 
                 _clientIdentifierProviderMock
@@ -78,7 +78,7 @@ namespace AspNetCore.CongestionControl.UnitTests
 
                 _tokenBucketConsumerMock
                     .Setup(mock => mock.ConsumeAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<int>()))
-                    .ReturnsAsync(new TokenConsumeResponse(false, 0));
+                    .ReturnsAsync(new ConsumeResult(false, 0, 1));
 
                 async Task Next(HttpContext httpContext)
                 {
@@ -91,7 +91,7 @@ namespace AspNetCore.CongestionControl.UnitTests
                     _configuration,
                     _clientIdentifierProviderMock.Object,
                     _tokenBucketConsumerMock.Object,
-                    _loggerMock.Object);
+                    _httpResponseFormatterMock.Object);
             };
 
             Because of = () =>
@@ -99,22 +99,11 @@ namespace AspNetCore.CongestionControl.UnitTests
                 _middleware.Invoke(_context).Await();
             };
 
-            It should_log_information_message = () =>
+            It should_execute_http_response_formatter = () =>
             {
-                _loggerMock.Verify(mock => mock.Log(
-                    LogLevel.Information,
-                    Moq.It.IsAny<EventId>(),
-                    Moq.It.IsAny<FormattedLogValues>(),
-                    Moq.It.IsAny<Exception>(),
-                    Moq.It.IsAny<Func<object, Exception, string>>()
-                ), Times.Once);
-            };
-
-            It should_set_the_expected_http_response = () =>
-            {
-                _context.Response.ShouldNotBeNull();
-                _context.Response.ContentType.ShouldEqual("application/json");
-                _context.Response.StatusCode.ShouldEqual(_configuration.HttpStatusCode);
+                _httpResponseFormatterMock.Verify(mock => mock.FormatAsync(
+                    Moq.It.IsAny<HttpContext>(),
+                    Moq.It.IsAny<RateLimitContext>()), Times.Once);
             };
 
             It should_not_execute_next_delegate_in_pipeline = () =>
@@ -122,12 +111,13 @@ namespace AspNetCore.CongestionControl.UnitTests
                 _isNextCalled.ShouldBeFalse();
             };
 
-            static bool _isNextCalled = false;
+            static bool _isNextCalled;
             static HttpContext _context = new DefaultHttpContext();
             static Mock<ILogger<RequestRateLimiterMiddleware>> _loggerMock;
             static CongestionControlConfiguration _configuration;
             static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
             static Mock<ITokenBucketConsumer> _tokenBucketConsumerMock;
+            static Mock<IHttpResponseFormatter> _httpResponseFormatterMock;
             static RequestRateLimiterMiddleware _middleware;
         }
     }

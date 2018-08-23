@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ITokenBucketConsumer.cs">
+// <copyright file="DefaultHttpResponseFormatter.cs">
 //   Copyright (c) 2018 Sergey Akopov
 //   
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,26 +24,30 @@
 
 namespace AspNetCore.CongestionControl
 {
+    using Microsoft.AspNetCore.Http;
     using System.Threading.Tasks;
 
     /// <summary>
-    /// The contract for token bucket consumer responsible for draining and refilling
-    /// tokens in the token bucket.
+    /// The default HTTP response formatter which sets the content type
+    /// and the configured HTTP status code on the response.
     /// </summary>
-    public interface ITokenBucketConsumer
+    public class DefaultHttpResponseFormatter : IHttpResponseFormatter
     {
         /// <summary>
-        /// Consumes requested number of tokens for the specified client.
+        /// Formats the HTTP response.
         /// </summary>
-        /// <param name="clientId">
-        /// The client identifier.
+        /// <param name="httpContext">
+        /// The context for the active HTTP request.
         /// </param>
-        /// <param name="requested">
-        /// The number of tokens to consume.
+        /// <param name="rateLimitContext">
+        /// The contextual information about rate-limited request.
         /// </param>
-        /// <returns>
-        /// The consumption result.
-        /// </returns>
-        Task<ConsumeResult> ConsumeAsync(string clientId, int requested);
+        public Task FormatAsync(HttpContext httpContext, RateLimitContext rateLimitContext)
+        {
+            httpContext.Response.ContentType = httpContext.Request.ContentType;
+            httpContext.Response.StatusCode = (int)rateLimitContext.HttpStatusCode;
+
+            return Task.CompletedTask;
+        }
     }
 }

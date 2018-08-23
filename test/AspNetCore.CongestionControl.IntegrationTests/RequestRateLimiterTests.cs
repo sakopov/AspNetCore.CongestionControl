@@ -34,7 +34,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>
@@ -87,7 +87,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>
@@ -139,7 +139,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>
@@ -192,7 +192,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>
@@ -244,7 +244,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>
@@ -297,7 +297,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>
@@ -349,7 +349,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>
@@ -402,7 +402,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
                 });
 
                 _client = _testServer.CreateClient();
-                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString("N"));
+                _client.DefaultRequestHeaders.Add("x-client-id", Guid.NewGuid().ToString());
             };
 
             Because of = () =>

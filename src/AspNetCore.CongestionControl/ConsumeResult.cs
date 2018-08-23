@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ITokenBucketConsumer.cs">
+// <copyright file="ConsumeResult.cs">
 //   Copyright (c) 2018 Sergey Akopov
 //   
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,26 +24,44 @@
 
 namespace AspNetCore.CongestionControl
 {
-    using System.Threading.Tasks;
-
     /// <summary>
-    /// The contract for token bucket consumer responsible for draining and refilling
-    /// tokens in the token bucket.
+    /// The response object used by <see cref="ITokenBucketConsumer"/> to communicate
+    /// whether the consumption of a token from token bucket was successful.
     /// </summary>
-    public interface ITokenBucketConsumer
+    public class ConsumeResult
     {
         /// <summary>
-        /// Consumes requested number of tokens for the specified client.
+        /// Initializes a new instance of <see cref="ConsumeResult"/> class.
         /// </summary>
-        /// <param name="clientId">
-        /// The client identifier.
+        /// <param name="isAllowed">
+        /// The value indicating whether token consumption was allowed.
         /// </param>
-        /// <param name="requested">
-        /// The number of tokens to consume.
+        /// <param name="remaining">
+        /// The remaining number of tokens left.
         /// </param>
-        /// <returns>
-        /// The consumption result.
-        /// </returns>
-        Task<ConsumeResult> ConsumeAsync(string clientId, int requested);
+        /// <param name="limit">
+        /// The total number of tokens available.
+        /// </param>
+        public ConsumeResult(bool isAllowed, int remaining, int limit)
+        {
+            IsAllowed = isAllowed;
+            Remaining = remaining;
+            Limit = limit;
+        }
+
+        /// <summary>
+        /// Gets the value indicating whether token consumption was allowed.
+        /// </summary>
+        public bool IsAllowed { get; }
+
+        /// <summary>
+        /// Gets the remaining number of tokens left.
+        /// </summary>
+        public int Remaining { get; }
+
+        /// <summary>
+        /// Gets the total number of tokens available.
+        /// </summary>
+        public int Limit { get; }
     }
 }

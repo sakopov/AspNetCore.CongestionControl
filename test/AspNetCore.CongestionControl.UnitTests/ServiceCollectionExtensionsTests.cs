@@ -1,18 +1,15 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
-using AspNetCore.CongestionControl.Configuration;
-using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
-using Machine.Specifications;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using StackExchange.Redis;
-using It = Machine.Specifications.It;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Configuration;
+    using Machine.Specifications;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.DependencyInjection;
+    using StackExchange.Redis;
+    using System;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using It = Machine.Specifications.It;
+
     class ServiceCollectionExtensionsTests
     {
         [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Negative Test")]
@@ -50,7 +47,7 @@ namespace AspNetCore.CongestionControl.UnitTests
         }
 
         [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_client_identifier_provider_is_not_set
+        public class When_client_identifier_provider_is_not_confiured
         {
             Because of = () =>
             {
@@ -106,6 +103,71 @@ namespace AspNetCore.CongestionControl.UnitTests
             It should_add_client_identifier_provider_to_service_collection = () =>
             {
                 _services.Any(service => service.ServiceType == typeof(IClientIdentifierProvider))
+                    .ShouldBeTrue();
+            };
+
+            static CongestionControlConfiguration _configuration;
+
+            static IServiceCollection _services = new ServiceCollection();
+        }
+
+        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
+        public class When_http_response_formatter_is_not_configured
+        {
+            Because of = () =>
+            {
+                _services.AddCongestionControl(options =>
+                {
+                    _configuration = options;
+                });
+            };
+
+            It should_set_http_response_formatter_to_default_in_congestion_control_configuration = () =>
+            {
+                _configuration.HttpResponseFormatter.ShouldNotBeNull();
+                _configuration.HttpResponseFormatter.ShouldBeOfExactType<DefaultHttpResponseFormatter>();
+            };
+
+            It should_add_client_identifier_provider_to_service_collection = () =>
+            {
+                _services.Any(service => service.ServiceType == typeof(IHttpResponseFormatter))
+                    .ShouldBeTrue();
+            };
+
+            static CongestionControlConfiguration _configuration;
+
+            static IServiceCollection _services = new ServiceCollection();
+        }
+
+        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
+        public class When_http_response_formatter_is_custom
+        {
+            class CustomHttpResponseFormatter : IHttpResponseFormatter
+            {
+                public Task FormatAsync(HttpContext httpContext, RateLimitContext rateLimitContext)
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            Because of = () =>
+            {
+                _services.AddCongestionControl(options =>
+                {
+                    options.AddHttpResponseFormatter(new CustomHttpResponseFormatter());
+                    _configuration = options;
+                });
+            };
+
+            It should_set_client_identifier_provider_in_congestion_control_configuration = () =>
+            {
+                _configuration.HttpResponseFormatter.ShouldNotBeNull();
+                _configuration.HttpResponseFormatter.ShouldBeOfExactType<CustomHttpResponseFormatter>();
+            };
+
+            It should_add_client_identifier_provider_to_service_collection = () =>
+            {
+                _services.Any(service => service.ServiceType == typeof(IHttpResponseFormatter))
                     .ShouldBeTrue();
             };
 
@@ -185,8 +247,8 @@ namespace AspNetCore.CongestionControl.UnitTests
 
             It should_add_redis_concurrent_request_tracker_to_the_service_collection = () =>
             {
-                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsTracker) &&
-                                         service.ImplementationType == typeof(RedisConcurrentRequestsTracker))
+                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) &&
+                                         service.ImplementationType == typeof(RedisConcurrentRequestsManager))
                     .ShouldBeTrue();
             };
 
@@ -226,8 +288,8 @@ namespace AspNetCore.CongestionControl.UnitTests
 
             It should_add_in_memory_concurrent_request_tracker_to_the_service_collection = () =>
             {
-                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsTracker) &&
-                                         service.ImplementationType == typeof(InMemoryConcurrentRequestsTracker))
+                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) &&
+                                         service.ImplementationType == typeof(InMemoryConcurrentRequestsManager))
                     .ShouldBeTrue();
             };
 

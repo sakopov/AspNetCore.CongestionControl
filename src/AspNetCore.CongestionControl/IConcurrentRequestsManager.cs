@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ITokenBucketConsumer.cs">
+// <copyright file="IConcurrentRequestsManager.cs">
 //   Copyright (c) 2018 Sergey Akopov
 //   
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,23 +27,42 @@ namespace AspNetCore.CongestionControl
     using System.Threading.Tasks;
 
     /// <summary>
-    /// The contract for token bucket consumer responsible for draining and refilling
-    /// tokens in the token bucket.
+    /// The contract for concurrent requests manager responsible for tracking
+    /// the number of simultaneously-executing requests per client and identifying
+    /// if a client exceeds the capacity.
     /// </summary>
-    public interface ITokenBucketConsumer
+    public interface IConcurrentRequestsManager
     {
         /// <summary>
-        /// Consumes requested number of tokens for the specified client.
+        /// Adds a new client request to the manager, if it isn't exceeding
+        /// the capacity.
         /// </summary>
         /// <param name="clientId">
-        /// The client identifier.
+        /// The identifier of the client which initiated the request.
         /// </param>
-        /// <param name="requested">
-        /// The number of tokens to consume.
+        /// <param name="requestId">
+        /// The request identifier.
+        /// </param>
+        /// <param name="timestamp">
+        /// The timestamp of the request.
         /// </param>
         /// <returns>
-        /// The consumption result.
+        /// The <see cref="AddConcurrentRequestResult"/> instance containing the response.
         /// </returns>
-        Task<ConsumeResult> ConsumeAsync(string clientId, int requested);
+        Task<AddConcurrentRequestResult> AddAsync(string clientId, string requestId, long timestamp);
+
+        /// <summary>
+        /// Removes an existing request from the manager.
+        /// </summary>
+        /// <param name="clientId">
+        /// The identifier of the client which initiated the request.
+        /// </param>
+        /// <param name="requestId">
+        /// The request identifier.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if the request was removed. Otherwise, <c>false</c>.
+        /// </returns>
+        Task<bool> RemoveAsync(string clientId, string requestId);
     }
 }

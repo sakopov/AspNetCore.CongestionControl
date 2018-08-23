@@ -1,9 +1,9 @@
-﻿using System;
-using Machine.Specifications;
-using Microsoft.AspNetCore.Http;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Machine.Specifications;
+    using Microsoft.AspNetCore.Http;
+    using System;
+
     class HeaderBasedClientIdentifierProviderTests
     {
         [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Positive Test")]

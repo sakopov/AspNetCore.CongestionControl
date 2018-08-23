@@ -1,7 +1,7 @@
-﻿using Machine.Specifications;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Machine.Specifications;
+
     class SortedSetTests
     {
         [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Positive Test")]

@@ -1,10 +1,11 @@
-﻿using AspNetCore.CongestionControl.Configuration;
-using Machine.Specifications;
-using Moq;
-using It = Machine.Specifications.It;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Configuration;
+    using Machine.Specifications;
+    using Moq;
+    using System;
+    using It = Machine.Specifications.It;
+
     class CongestionControlConfigurationTests
     {
         [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
@@ -97,22 +98,6 @@ namespace AspNetCore.CongestionControl.UnitTests
         }
 
         [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_header_based_client_identifier_provider
-        {
-            Because of = () =>
-            {
-                _configuration.AddHeaderBasedClientIdentifierProvider();
-            };
-
-            It should_set_the_configuration_internally = () =>
-            {
-                _configuration.ClientIdentifierProvider.ShouldNotBeNull();
-            };
-
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
-        }
-
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
         public class When_adding_custom_client_identifier_provider
         {
             Because of = () =>
@@ -125,6 +110,58 @@ namespace AspNetCore.CongestionControl.UnitTests
                 _configuration.ClientIdentifierProvider.ShouldNotBeNull();
             };
 
+            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+        }
+
+        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Negative Test")]
+        public class When_adding_custom_client_identifier_provider_and_passing_null
+        {
+            Because of = () =>
+            {
+                _exception = Catch.Exception(() => _configuration.AddClientIdentifierProvider(null));
+            };
+
+            It should_throw_argument_null_exception = () =>
+            {
+                _exception.ShouldNotBeNull();
+                _exception.ShouldBeOfExactType<ArgumentNullException>();
+            };
+
+            static Exception _exception;
+            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+        }
+
+        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
+        public class When_adding_custom_http_response_formatter
+        {
+            Because of = () =>
+            {
+                _configuration.AddHttpResponseFormatter(new Mock<IHttpResponseFormatter>().Object);
+            };
+
+            It should_set_the_configuration_internally = () =>
+            {
+                _configuration.HttpResponseFormatter.ShouldNotBeNull();
+            };
+
+            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+        }
+
+        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Negative Test")]
+        public class When_adding_custom_http_response_formatter_and_passing_null
+        {
+            Because of = () =>
+            {
+                _exception = Catch.Exception(() => _configuration.AddHttpResponseFormatter(null));
+            };
+
+            It should_throw_argument_null_exception = () =>
+            {
+                _exception.ShouldNotBeNull();
+                _exception.ShouldBeOfExactType<ArgumentNullException>();
+            };
+
+            static Exception _exception;
             static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
         }
     }

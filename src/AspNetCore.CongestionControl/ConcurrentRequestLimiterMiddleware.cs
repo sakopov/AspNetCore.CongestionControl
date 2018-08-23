@@ -1,15 +1,38 @@
-﻿using System;
-using System.Threading.Tasks;
-using AspNetCore.CongestionControl.Configuration;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ConcurrentRequestLimiterMiddleware.cs">
+//   Copyright (c) 2018 Sergey Akopov
+//   
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//   
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//   
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace AspNetCore.CongestionControl
 {
+    using Configuration;
+    using Microsoft.AspNetCore.Http;
+    using System;
+    using System.Net;
+    using System.Threading.Tasks;
+
     /// <summary>
-    /// This class implements middleware responsible for enforcing rate
-    /// limiting for the number of simultaneously-executing requests for
-    /// each client.
+    /// The middleware responsible for enforcing rate limiting of
+    /// simultaneously-executing client requests over a time interval.
     /// </summary>
     public class ConcurrentRequestLimiterMiddleware
     {
@@ -19,56 +42,56 @@ namespace AspNetCore.CongestionControl
         private readonly RequestDelegate _next;
 
         /// <summary>
-        /// The congestion control configuration options.
+        /// The congestion control configuration.
         /// </summary>
         private readonly CongestionControlConfiguration _configuration;
 
         /// <summary>
-        /// The client identifier provider implementation.
+        /// The client identifier provider.
         /// </summary>
         private readonly IClientIdentifierProvider _clientIdentifierProvider;
 
         /// <summary>
-        /// The concurrent requests tracker implementation.
+        /// The concurrent requests manager.
         /// </summary>
-        private readonly IConcurrentRequestsTracker _concurrentRequestsTracker;
+        private readonly IConcurrentRequestsManager _concurrentRequestsManager;
 
         /// <summary>
-        /// The logger.
+        /// The HTTP response formatter.
         /// </summary>
-        private readonly ILogger<ConcurrentRequestLimiterMiddleware> _logger;
+        private readonly IHttpResponseFormatter _httpResponseFormatter;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ConcurrentRequestLimiterMiddleware"/>
+        /// Initializes a new instance of <see cref="ConcurrentRequestLimiterMiddleware"/>
         /// class.
         /// </summary>
         /// <param name="next">
         /// The next item in the middleware pipeline.
         /// </param>
         /// <param name="configuration">
-        /// The congestion control configuration options.
+        /// The congestion control configuration.
         /// </param>
         /// <param name="clientIdentifierProvider">
         /// The client identifier provider.
         /// </param>
-        /// <param name="concurrentRequestsTracker">
-        /// The concurrent request tracker.
+        /// <param name="concurrentRequestsManager">
+        /// The concurrent request manager.
         /// </param>
-        /// <param name="logger">
-        /// The logger.
+        /// <param name="httpResponseFormatter">
+        /// The HTTP response formatter.
         /// </param>
         public ConcurrentRequestLimiterMiddleware(
             RequestDelegate next,
             CongestionControlConfiguration configuration,
             IClientIdentifierProvider clientIdentifierProvider,
-            IConcurrentRequestsTracker concurrentRequestsTracker,
-            ILogger<ConcurrentRequestLimiterMiddleware> logger)
+            IConcurrentRequestsManager concurrentRequestsManager,
+            IHttpResponseFormatter httpResponseFormatter)
         {
             _next = next;
             _configuration = configuration;
             _clientIdentifierProvider = clientIdentifierProvider;
-            _concurrentRequestsTracker = concurrentRequestsTracker;
-            _logger = logger;
+            _concurrentRequestsManager = concurrentRequestsManager;
+            _httpResponseFormatter = httpResponseFormatter;
         }
 
         /// <summary>
@@ -85,16 +108,17 @@ namespace AspNetCore.CongestionControl
         {
             var clientId = await _clientIdentifierProvider.ExecuteAsync(context);
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var requestId = Guid.NewGuid().ToString("N");
+            var requestId = Guid.NewGuid().ToString();
 
-            var isAllowed = await _concurrentRequestsTracker.AddAsync(clientId, requestId, timestamp);
+            var response = await _concurrentRequestsManager.AddAsync(clientId, requestId, timestamp);
 
-            if (!isAllowed)
+            if (!response.IsAllowed)
             {
-                _logger.LogInformation("The request {0} for client {1} was not allowed because the client has exceeded concurrent request limiter capacity.", requestId, clientId);
-
-                context.Response.ContentType = "application/json";
-                context.Response.StatusCode = _configuration.HttpStatusCode;
+                await _httpResponseFormatter.FormatAsync(context, new RateLimitContext(
+                    remaining: response.Remaining,
+                    limit: response.Limit,
+                    httpStatusCode: (HttpStatusCode)_configuration.HttpStatusCode
+                ));
 
                 return;
             }
@@ -106,7 +130,7 @@ namespace AspNetCore.CongestionControl
                 return;
             }
 
-            await _concurrentRequestsTracker.RemoveAsync(clientId, requestId);
+            await _concurrentRequestsManager.RemoveAsync(clientId, requestId);
         }
     }
 }

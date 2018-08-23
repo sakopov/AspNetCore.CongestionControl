@@ -1,10 +1,34 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="SkipList.cs">
+//   Copyright (c) 2018 Sergey Akopov
+//   
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//   
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//   
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace AspNetCore.CongestionControl.SortedSet
 {
+    using System.Collections.Generic;
+    using System.Diagnostics;
+
     /// <summary>
-    /// This class implements a skip list where the node comparison
+    /// The skip list implementation where node comparison
     /// occurs by score and data element.
     /// </summary>
     public class SkipList
@@ -32,7 +56,7 @@ namespace AspNetCore.CongestionControl.SortedSet
         /// <summary>
         /// Gets the total number of items in the skip list.
         /// </summary>
-        public long Length { get; private set; }
+        public int Length { get; private set; }
 
         /// <summary>
         /// Gets the total number of levels in the skip list.
@@ -40,7 +64,7 @@ namespace AspNetCore.CongestionControl.SortedSet
         public int Levels { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SkipList"/> class
+        /// Initializes a new instance of <see cref="SkipList"/> class
         /// using <see cref="SkipListNodeLevelGenerator"/> as the node
         /// level generator.
         /// </summary>
@@ -48,7 +72,7 @@ namespace AspNetCore.CongestionControl.SortedSet
         { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SkipList"/> class.
+        /// Initializes a new instance of <see cref="SkipList"/> class.
         /// </summary>
         public SkipList(ISkipListNodeLevelGenerator nodeLevelGenerator)
         {

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ITokenBucketConsumer.cs">
+// <copyright file="AddConcurrentRequestResult.cs">
 //   Copyright (c) 2018 Sergey Akopov
 //   
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,26 +24,46 @@
 
 namespace AspNetCore.CongestionControl
 {
-    using System.Threading.Tasks;
-
     /// <summary>
-    /// The contract for token bucket consumer responsible for draining and refilling
-    /// tokens in the token bucket.
+    /// The response object used to communicate whether the addition
+    /// of a request to <see cref="IConcurrentRequestsManager"/> was
+    /// successful.
     /// </summary>
-    public interface ITokenBucketConsumer
+    public class AddConcurrentRequestResult
     {
         /// <summary>
-        /// Consumes requested number of tokens for the specified client.
+        /// Initializes a new instance of <see cref="AddConcurrentRequestResult"/>
+        /// class.
         /// </summary>
-        /// <param name="clientId">
-        /// The client identifier.
+        /// <param name="isAllowed">
+        /// The value indicating whether the request was allowed to be added
         /// </param>
-        /// <param name="requested">
-        /// The number of tokens to consume.
+        /// <param name="remaining">
+        /// The remaining number of requests left.
         /// </param>
-        /// <returns>
-        /// The consumption result.
-        /// </returns>
-        Task<ConsumeResult> ConsumeAsync(string clientId, int requested);
+        /// <param name="limit">
+        /// The total number of requests available.
+        /// </param>
+        public AddConcurrentRequestResult(bool isAllowed, int remaining, int limit)
+        {
+            IsAllowed = isAllowed;
+            Remaining = remaining;
+            Limit = limit;
+        }
+
+        /// <summary>
+        /// Gets the value indicating whether the request wasadded.
+        /// </summary>
+        public bool IsAllowed { get; }
+
+        /// <summary>
+        /// Gets the remaining number of requests left.
+        /// </summary>
+        public int Remaining { get; }
+
+        /// <summary>
+        /// Gets the total number of requests available.
+        /// </summary>
+        public int Limit { get; }
     }
 }

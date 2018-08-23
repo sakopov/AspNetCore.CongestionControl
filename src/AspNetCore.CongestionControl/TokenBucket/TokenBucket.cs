@@ -1,10 +1,33 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="TokenBucket.cs">
+//   Copyright (c) 2018 Sergey Akopov
+//   
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//   
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//   
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace AspNetCore.CongestionControl.TokenBucket
 {
+    using System;
+
     /// <summary>
-    /// This class implements a simple in-memory token bucket.
+    /// The simple in-memory token bucket.
     /// </summary>
     public class TokenBucket
     {
@@ -34,7 +57,7 @@ namespace AspNetCore.CongestionControl.TokenBucket
         private int _availableTokens;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TokenBucket"/> class.
+        /// Initializes a new instance of <see cref="TokenBucket"/> class.
         /// </summary>
         /// <param name="interval">
         /// The length of the time unit in seconds.
@@ -64,7 +87,7 @@ namespace AspNetCore.CongestionControl.TokenBucket
         /// The response containing information about whether the reduction
         /// of tokens was allowed.
         /// </returns>
-        public Task<TokenConsumeResponse> Consume(int requestedTokens)
+        public ConsumeResult Consume(int requestedTokens)
         {
             var intervalsSinceLastsUpdate = GetIntervalsSinceLastsUpdate();
 
@@ -87,13 +110,21 @@ namespace AspNetCore.CongestionControl.TokenBucket
             // response.
             if (requestedTokens > _availableTokens)
             {
-                return Task.FromResult(TokenConsumeResponse.NonConforming(_availableTokens));
+                return new ConsumeResult(
+                    isAllowed: false,
+                    remaining: _availableTokens,
+                    limit: _capacity
+                );
             }
 
             // Proceed and reduce available tokens.
             _availableTokens -= requestedTokens;
 
-            return Task.FromResult(TokenConsumeResponse.Conforming(_availableTokens));
+            return new ConsumeResult(
+                isAllowed: true,
+                remaining: _availableTokens,
+                limit: _capacity
+            );
         }
 
         /// <summary>

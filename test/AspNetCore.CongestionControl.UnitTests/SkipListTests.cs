@@ -1,11 +1,10 @@
-﻿using System;
-using AspNetCore.CongestionControl.SortedSet;
-using Machine.Specifications;
-using Moq;
-using It = Machine.Specifications.It;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Machine.Specifications;
+    using Moq;
+    using SortedSet;
+    using It = Machine.Specifications.It;
+
     class SkipListTests
     {
         [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]

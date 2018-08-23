@@ -1,9 +1,9 @@
-﻿using System;
-using AspNetCore.CongestionControl.Configuration;
-using Machine.Specifications;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Configuration;
+    using Machine.Specifications;
+    using System;
+
     class RedisConfigurationTests
     {
         [Subject(typeof(RedisConfiguration), "Redis Configuration"), Tags("Positive Test")]

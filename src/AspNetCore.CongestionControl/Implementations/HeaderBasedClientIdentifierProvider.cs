@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ITokenBucketConsumer.cs">
+// <copyright file="HeaderBasedClientIdentifierProvider.cs">
 //   Copyright (c) 2018 Sergey Akopov
 //   
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,26 +24,56 @@
 
 namespace AspNetCore.CongestionControl
 {
+    using Microsoft.AspNetCore.Http;
+    using System;
     using System.Threading.Tasks;
 
     /// <summary>
-    /// The contract for token bucket consumer responsible for draining and refilling
-    /// tokens in the token bucket.
+    /// The client identifier provider which looks at the configured
+    /// header in the incoming request to get client identifier.
     /// </summary>
-    public interface ITokenBucketConsumer
+    public class HeaderBasedClientIdentifierProvider : IClientIdentifierProvider
     {
         /// <summary>
-        /// Consumes requested number of tokens for the specified client.
+        /// The name of the header containing client identifier.
         /// </summary>
-        /// <param name="clientId">
-        /// The client identifier.
+        private readonly string _headerName;
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="HeaderBasedClientIdentifierProvider"/> class.
+        /// </summary>
+        /// <param name="headerName">
+        /// The name of the header containing client identifier.
         /// </param>
-        /// <param name="requested">
-        /// The number of tokens to consume.
+        public HeaderBasedClientIdentifierProvider(string headerName = "x-client-id")
+        {
+            if (string.IsNullOrEmpty(headerName))
+            {
+                throw new ArgumentNullException(nameof(headerName));
+            }
+
+            _headerName = headerName;
+        }
+
+        /// <summary>
+        /// Gets client identifier from headers.
+        /// </summary>
+        /// <param name="httpContext">
+        /// The context for current HTTP request.
         /// </param>
         /// <returns>
-        /// The consumption result.
+        /// The client identifier.
         /// </returns>
-        Task<ConsumeResult> ConsumeAsync(string clientId, int requested);
+        public Task<string> ExecuteAsync(HttpContext httpContext)
+        {
+            var clientId = "anonymous";
+
+            if (httpContext?.Request?.Headers?.TryGetValue(_headerName, out var value) ?? false)
+            {
+                clientId = value.ToString();
+            }
+
+            return Task.FromResult(clientId);
+        }
     }
 }

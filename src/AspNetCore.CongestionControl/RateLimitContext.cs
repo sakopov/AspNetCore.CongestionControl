@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ITokenBucketConsumer.cs">
+// <copyright file="RateLimitContext.cs">
 //   Copyright (c) 2018 Sergey Akopov
 //   
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,26 +24,46 @@
 
 namespace AspNetCore.CongestionControl
 {
-    using System.Threading.Tasks;
+    using System.Net;
 
     /// <summary>
-    /// The contract for token bucket consumer responsible for draining and refilling
-    /// tokens in the token bucket.
+    /// The contextual information about rate-limited request.
     /// </summary>
-    public interface ITokenBucketConsumer
+    public class RateLimitContext
     {
         /// <summary>
-        /// Consumes requested number of tokens for the specified client.
+        /// Initializes a new instance of <see cref="RateLimitContext"/>
+        /// class.
         /// </summary>
-        /// <param name="clientId">
-        /// The client identifier.
+        /// <param name="remaining">
+        /// The number of remaining requests.
         /// </param>
-        /// <param name="requested">
-        /// The number of tokens to consume.
+        /// <param name="limit">
+        /// The number of allowed requests.
         /// </param>
-        /// <returns>
-        /// The consumption result.
-        /// </returns>
-        Task<ConsumeResult> ConsumeAsync(string clientId, int requested);
+        /// <param name="httpStatusCode">
+        /// The HTTP status code.
+        /// </param>
+        public RateLimitContext(int remaining, int limit, HttpStatusCode httpStatusCode)
+        {
+            Remaining = remaining;
+            Limit = limit;
+            HttpStatusCode = httpStatusCode;
+        }
+
+        /// <summary>
+        /// Gets the number of remaining requests.
+        /// </summary>
+        public int Remaining { get; }
+
+        /// <summary>
+        /// Gets the number of allowed requests.
+        /// </summary>
+        public int Limit { get; }
+
+        /// <summary>
+        /// Gets the HTTP status code to return in the response.
+        /// </summary>
+        public HttpStatusCode HttpStatusCode { get; }
     }
 }

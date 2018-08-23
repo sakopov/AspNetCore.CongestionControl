@@ -1,8 +1,11 @@
-﻿using AspNetCore.CongestionControl.Configuration;
-using Machine.Specifications;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Configuration;
+    using Machine.Specifications;
+    using Microsoft.Extensions.Logging;
+    using Moq;
+    using It = Machine.Specifications.It;
+
     class InMemoryTokenBucketConsumerTests
     {
         [Subject(typeof(InMemoryTokenBucketConsumer), "In-Memory Token Bucket Consumer"), Tags("Positive Test")]
@@ -11,7 +14,9 @@ namespace AspNetCore.CongestionControl.UnitTests
             Establish context = () =>
             {
                 _configuration = new RequestRateLimiterConfiguration();
-                _consumer = new InMemoryTokenBucketConsumer(_configuration);
+                _consumer = new InMemoryTokenBucketConsumer(_configuration, _loggerMock.Object);
+
+                _capacity = _configuration.AverageRate * _configuration.Bursting;
             };
 
             Because of = () =>
@@ -22,21 +27,18 @@ namespace AspNetCore.CongestionControl.UnitTests
             It should_allow_token_consumption = () =>
             {
                 _response.IsAllowed.ShouldBeTrue();
-            };
-
-            It should_return_the_remaining_tokens_left = () =>
-            {
-                var capacity = _configuration.AverageRate * _configuration.Bursting;
-
-                _response.TokensLeft.Equals(capacity - 1);
+                _response.Limit.ShouldEqual(_capacity);
+                _response.Remaining.ShouldEqual(_capacity - 1);
             };
 
             const string ClientId = "tester";
             const int Requested = 1;
 
-            static TokenConsumeResponse _response;
+            static int _capacity;
+            static ConsumeResult _response;
             static RequestRateLimiterConfiguration _configuration;
             static InMemoryTokenBucketConsumer _consumer;
+            static Mock<ILogger<InMemoryTokenBucketConsumer>> _loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
         }
 
         [Subject(typeof(InMemoryTokenBucketConsumer), "In-Memory Token Bucket Consumer"), Tags("Positive Test")]
@@ -45,8 +47,10 @@ namespace AspNetCore.CongestionControl.UnitTests
             Establish context = () =>
             {
                 _configuration = new RequestRateLimiterConfiguration();
-                _consumer = new InMemoryTokenBucketConsumer(_configuration);
+                _consumer = new InMemoryTokenBucketConsumer(_configuration, _loggerMock.Object);
                 _consumer.ConsumeAsync(ClientId, PreviousConsumptionCount).Await();
+
+                _capacity = _configuration.AverageRate * _configuration.Bursting;
             };
 
             Because of = () =>
@@ -57,20 +61,19 @@ namespace AspNetCore.CongestionControl.UnitTests
             It should_allow_token_consumption = () =>
             {
                 _response.IsAllowed.ShouldBeTrue();
-            };
-
-            It should_return_the_remaining_tokens_left = () =>
-            {
-                _response.TokensLeft.Equals(_configuration.AverageRate * _configuration.Bursting - PreviousConsumptionCount);
+                _response.Limit.ShouldEqual(_capacity);
+                _response.Remaining.ShouldEqual(_capacity - PreviousConsumptionCount - Requested);
             };
 
             const string ClientId = "tester";
             const int Requested = 1;
             const int PreviousConsumptionCount = 5;
 
-            static TokenConsumeResponse _response;
+            static int _capacity;
+            static ConsumeResult _response;
             static RequestRateLimiterConfiguration _configuration;
             static InMemoryTokenBucketConsumer _consumer;
+            static Mock<ILogger<InMemoryTokenBucketConsumer>> _loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
         }
 
         [Subject(typeof(InMemoryTokenBucketConsumer), "In-Memory Token Bucket Consumer"), Tags("Negative Test")]
@@ -80,11 +83,11 @@ namespace AspNetCore.CongestionControl.UnitTests
             {
                 _configuration = new RequestRateLimiterConfiguration();
 
-                _consumer = new InMemoryTokenBucketConsumer(_configuration);
+                _consumer = new InMemoryTokenBucketConsumer(_configuration, _loggerMock.Object);
 
-                var capacity = _configuration.AverageRate * _configuration.Bursting;
+                _capacity = _configuration.AverageRate * _configuration.Bursting;
 
-                _consumer.ConsumeAsync(ClientId, capacity).Await();
+                _consumer.ConsumeAsync(ClientId, _capacity).Await();
             };
 
             Because of = () =>
@@ -95,19 +98,18 @@ namespace AspNetCore.CongestionControl.UnitTests
             It should_not_allow_token_consumption = () =>
             {
                 _response.IsAllowed.ShouldBeFalse();
-            };
-
-            It should_return_0_available_tokens = () =>
-            {
-                _response.TokensLeft.ShouldEqual(0);
+                _response.Limit.ShouldEqual(_capacity);
+                _response.Remaining.ShouldEqual(0);
             };
 
             const string ClientId = "tester";
             const int Requested = 1;
 
-            static TokenConsumeResponse _response;
+            static int _capacity;
+            static ConsumeResult _response;
             static RequestRateLimiterConfiguration _configuration;
             static InMemoryTokenBucketConsumer _consumer;
+            static Mock<ILogger<InMemoryTokenBucketConsumer>> _loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
         }
     }
 }

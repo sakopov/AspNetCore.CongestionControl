@@ -1,9 +1,9 @@
-﻿using System;
-using AspNetCore.CongestionControl.Configuration;
-using Machine.Specifications;
-
-namespace AspNetCore.CongestionControl.UnitTests
+﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Configuration;
+    using Machine.Specifications;
+    using System;
+
     class ConcurrentRequestLimiterConfigurationTests
     {
         [Subject(typeof(ConcurrentRequestLimiterConfiguration), "Concurrent Request Limiter Configuration"), Tags("Positive Test")]
