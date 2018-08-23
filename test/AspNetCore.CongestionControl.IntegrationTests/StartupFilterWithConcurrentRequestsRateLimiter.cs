@@ -10,7 +10,7 @@ namespace AspNetCore.CongestionControl.IntegrationTests
         {
             return app =>
             {
-                app.UseConcurrentRequestsLimiter();
+                app.UseConcurrentRequestLimiter();
 
                 next(app);
             };

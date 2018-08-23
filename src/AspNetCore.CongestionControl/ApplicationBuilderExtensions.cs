@@ -54,7 +54,7 @@ namespace AspNetCore.CongestionControl
         /// <returns>
         /// The application builder.
         /// </returns>
-        public static IApplicationBuilder UseConcurrentRequestsLimiter(this IApplicationBuilder builder)
+        public static IApplicationBuilder UseConcurrentRequestLimiter(this IApplicationBuilder builder)
         {
             return builder.UseMiddleware<ConcurrentRequestLimiterMiddleware>();
         }

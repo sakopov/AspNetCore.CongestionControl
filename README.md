@@ -82,7 +82,7 @@ public void ConfigureServices(IServiceCollection services)
 public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 {
     // Use the middleware
-    app.UseConcurrentRequestsLimiter();
+    app.UseConcurrentRequestLimiter();
 
     ...
 
@@ -92,7 +92,7 @@ public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 
 ## Client Identifiers
 
-All congestion control middleware components require a way to uniquely identify clients making requests to your API. By default, all middleware is using header-based client identification strategy where the client identifier is passed via `x-client-id` header. 
+All middleware components require a way to uniquely identify clients making requests to your API. A header-based client identification strategy is used by default where the client identifier is passed via `x-client-id` header. 
 
 Anonymous access is assumed if the client identifier cannot be found in the request. If you choose to define a custom header, you can do so as shown below.
 
@@ -224,7 +224,7 @@ Each middleware component can run individually or in combination with the other.
 public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 {
     app.UseRequestRateLimiter();
-    app.UseConcurrentRequestsLimiter();
+    app.UseConcurrentRequestLimiter();
 
     ...
 
