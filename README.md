@@ -2,6 +2,7 @@ AspNetCore.CongestionControl
 =======
 
 [![Build status](https://ci.appveyor.com/api/projects/status/10hsvd062bymvl0y?svg=true)](https://ci.appveyor.com/project/sakopov/aspnetcore-congestioncontrol)
+[![NuGet Pre Release](https://img.shields.io/nuget/vpre/AspNetCore.CongestionControl.svg)](https://www.nuget.org/packages/AspNetCore.CongestionControl)
 
 *Congestion control middleware components for ASPNET Core.*
 
@@ -11,7 +12,11 @@ This library provides a set of middleware components designed to help maintain A
 
 ## Installation
 
-**This library is a work in progress and hasn't yet been released.**
+Install [AspNetCore.CongestionControl with NuGet](https://www.nuget.org/packages/AspNetCore.CongestionControl)
+
+```
+Install-Package AspNetCore.CongestionControl
+```
 
 ## Request Rate Limiter
 
