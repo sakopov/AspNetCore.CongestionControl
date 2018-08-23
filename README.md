@@ -5,7 +5,7 @@ AspNetCore.CongestionControl
 
 *Congestion control middleware components for ASPNET Core.*
 
-This library provides a set of middleware components designed to help maintain API availability and reliability via several commonly used rate limiter algorithms.
+This library provides a set of middleware components designed to help maintain API availability and reliability via several commonly-used rate limiter algorithms.
 
 > Note, the rate limiting methods presented here are based on work outlined in Stripe's Engineering blog post - [Scaling your API with rate limiters](https://stripe.com/blog/rate-limiters) - with a few trivial modifications.
 
@@ -90,7 +90,7 @@ public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 }
 ```
 
-## Identifying Clients
+## Client Identifiers
 
 All congestion control middleware components require a way to uniquely identify clients making requests to your API. By default, all middleware is using header-based client identification strategy where the client identifier is passed via `x-client-id` header. 
 
@@ -136,9 +136,9 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-## Custom HTTP Response Codes
+## HTTP Response Formatting
 
-In a case where a request is rate-limited, the client will receive HTTP status code **429 / Too Many Requests**. However, it's possible to provide a custom status code via `HttpStatusCode` property.
+If a request is rate-limited by any of the middleware, the client will receive a response with HTTP status code **429 / Too Many Requests** (unless configured otherwise) and content type matching that of the original request. It's possible to provide a custom status code via `HttpStatusCode` property.
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
@@ -147,6 +147,39 @@ public void ConfigureServices(IServiceCollection services)
     {
         // Use 503 / Service Unavailable
         options.HttpStatusCode = 503;
+    });
+
+    ...
+
+    services.AddMvc();
+}
+```
+
+## Custom HTTP Response Formatting
+
+If you need to customize the rate limit response, you can do so my implementing `IHttpResponseFormatter`. The example below shows HTTP response formatter which adds `X-RateLimit-Limit` and `X-RateLimit-Remaining` headers to the response.
+
+> Note, it is not recommended to return rate limit and remaining number of requests if you're using both **Request Rate Limiter** and **Concurrent Request Limiter** simultaneously because each rate limiter throttles requests using different rate limits and the response can confuse the client. 
+
+```csharp
+public class MyCustomHttpResponseFormatter : IHttpResponseFormatter
+{
+    public Task FormatAsync(HttpContext httpContext, RateLimitContext rateLimitContext)
+    {
+        httpContext.Response.ContentType = httpContext.Request.ContentType;
+        httpContext.Response.StatusCode = (int)rateLimitContext.HttpStatusCode;
+        httpContext.Response.Headers.Add("X-RateLimit-Limit", rateLimitContext.Limit.ToString());
+        httpContext.Response.Headers.Add("X-RateLimit-Remaining", rateLimitContext.Remaining.ToString());
+
+        return Task.CompletedTask;
+    }
+}
+
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddCongestionControl(options =>
+    {
+        options.AddHttpResponseFormatter(new MyCustomHttpResponseFormatter());
     });
 
     ...
@@ -177,3 +210,30 @@ public void ConfigureServices(IServiceCollection services)
     services.AddMvc();
 }
 ```
+
+## Considerations and Limitations
+
+### Order of Execution
+
+Each middleware component can run individually or in combination with the other. If you plan to use both types of rate limiters it is recommended to run them in the following order:
+
+1. Request Rate Limiter
+2. Concurrent Requests Limiter
+
+```csharp
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    app.UseRequestRateLimiter();
+    app.UseConcurrentRequestsLimiter();
+
+    ...
+
+    app.UseMvc();
+}
+```
+
+In addition, rate limiters should be one of the first middleware components executing in your middleware pipeline.
+
+### Client-Specific Rate Limits
+
+Client-specific rate limits are currently not supported and it's not entirely sure if they'll ever be supported.
