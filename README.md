@@ -218,7 +218,7 @@ public void ConfigureServices(IServiceCollection services)
 Each middleware component can run individually or in combination with the other. If you plan to use both types of rate limiters it is recommended to run them in the following order:
 
 1. Request Rate Limiter
-2. Concurrent Requests Limiter
+2. Concurrent Request Limiter
 
 ```csharp
 public void Configure(IApplicationBuilder app, IHostingEnvironment env)
