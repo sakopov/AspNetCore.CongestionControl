@@ -154,7 +154,7 @@ namespace AspNetCore.CongestionControl
                 // with it.
                 return new AddConcurrentRequestResult(
                     isAllowed: true,
-                    remaining: capacity,
+                    remaining: capacity - 1,
                     limit: capacity
                 );
             }

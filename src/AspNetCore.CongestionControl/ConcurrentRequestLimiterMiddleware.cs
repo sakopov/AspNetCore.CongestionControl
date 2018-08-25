@@ -62,6 +62,11 @@ namespace AspNetCore.CongestionControl
         private readonly IHttpResponseFormatter _httpResponseFormatter;
 
         /// <summary>
+        /// The name of the rate limiter.
+        /// </summary>
+        private const string RateLimiterName = "ConcurrentRequestLimiter";
+
+        /// <summary>
         /// Initializes a new instance of <see cref="ConcurrentRequestLimiterMiddleware"/>
         /// class.
         /// </summary>
@@ -117,7 +122,8 @@ namespace AspNetCore.CongestionControl
                 await _httpResponseFormatter.FormatAsync(context, new RateLimitContext(
                     remaining: response.Remaining,
                     limit: response.Limit,
-                    httpStatusCode: (HttpStatusCode)_configuration.HttpStatusCode
+                    httpStatusCode: (HttpStatusCode)_configuration.HttpStatusCode,
+                    source: RateLimiterName
                 ));
 
                 return;

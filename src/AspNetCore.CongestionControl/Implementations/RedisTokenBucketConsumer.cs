@@ -148,7 +148,7 @@ namespace AspNetCore.CongestionControl
                 // Fail open if there is an exception.
                 return new ConsumeResult(
                     isAllowed: true,
-                    remaining: capacity,
+                    remaining: capacity - 1,
                     limit: capacity
                 );
             }

@@ -66,6 +66,11 @@ namespace AspNetCore.CongestionControl
         private const int RequestedTokens = 1;
 
         /// <summary>
+        /// The name of the rate limiter.
+        /// </summary>
+        private const string RateLimiterName = "RequestRateLimiter";
+
+        /// <summary>
         /// Initializes new instances of <see cref="RequestRateLimiterMiddleware"/> class.
         /// </summary>
         /// <param name="next">
@@ -118,7 +123,8 @@ namespace AspNetCore.CongestionControl
                 await _httpResponseFormatter.FormatAsync(httpContext, new RateLimitContext(
                     remaining: response.Remaining,
                     limit: response.Limit,
-                    httpStatusCode: (HttpStatusCode)_configuration.HttpStatusCode
+                    httpStatusCode: (HttpStatusCode)_configuration.HttpStatusCode,
+                    source: RateLimiterName
                 ));
 
                 return;

@@ -44,11 +44,19 @@ namespace AspNetCore.CongestionControl
         /// <param name="httpStatusCode">
         /// The HTTP status code.
         /// </param>
-        public RateLimitContext(int remaining, int limit, HttpStatusCode httpStatusCode)
+        /// <param name="source">
+        /// Gets the source responsible for rate-limiting a request.
+        /// </param>
+        public RateLimitContext(
+            int remaining,
+            int limit,
+            HttpStatusCode httpStatusCode,
+            string source)
         {
             Remaining = remaining;
             Limit = limit;
             HttpStatusCode = httpStatusCode;
+            Source = source;
         }
 
         /// <summary>
@@ -65,5 +73,10 @@ namespace AspNetCore.CongestionControl
         /// Gets the HTTP status code to return in the response.
         /// </summary>
         public HttpStatusCode HttpStatusCode { get; }
+
+        /// <summary>
+        /// Gets the source responsible for rate-limiting a request.
+        /// </summary>
+        public string Source { get; }
     }
 }
