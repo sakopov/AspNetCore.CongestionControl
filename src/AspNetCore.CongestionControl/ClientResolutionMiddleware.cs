@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="RequestRateLimiterMiddleware.cs">
+// <copyright file="ClientResolutionMiddleware.cs">
 //   Copyright (c) 2018 Sergey Akopov
 //   
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,17 +24,19 @@
 
 namespace AspNetCore.CongestionControl
 {
-    using System.Net;
-    using System.Threading.Tasks;
+    using Configuration;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
-    using Configuration;
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using System.Threading.Tasks;
 
     /// <summary>
-    /// The middleware responsible for enforcing rate limiting of client
-    /// requests over a time interval.
+    /// The middleware responsible for resolving and verifying client
+    /// identity.
     /// </summary>
-    public class RequestRateLimiterMiddleware
+    public class ClientResolutionMiddleware
     {
         /// <summary>
         /// The next item in the middleware pipeline.
@@ -47,29 +49,14 @@ namespace AspNetCore.CongestionControl
         private readonly CongestionControlConfiguration _configuration;
 
         /// <summary>
-        /// The token bucket consumer.
+        /// The client identifier providers.
         /// </summary>
-        private readonly ITokenBucketConsumer _tokenBucketConsumer;
-
-        /// <summary>
-        /// The HTTP response formatter.
-        /// </summary>
-        private readonly IHttpResponseFormatter _httpResponseFormatter;
+        private readonly IEnumerable<IClientIdentifierProvider> _clientIdentifierProviders;
 
         /// <summary>
         /// The logger.
         /// </summary>
         private readonly ILogger _logger;
-
-        /// <summary>
-        /// The number of tokens to consume per request.
-        /// </summary>
-        private const int RequestedTokens = 1;
-
-        /// <summary>
-        /// The name of the rate limiter.
-        /// </summary>
-        private const string RateLimiterName = "RequestRateLimiter";
 
         /// <summary>
         /// Initializes new instances of <see cref="RequestRateLimiterMiddleware"/> class.
@@ -80,26 +67,21 @@ namespace AspNetCore.CongestionControl
         /// <param name="configuration">
         /// The congestion control configuration.
         /// </param>
-        /// <param name="tokenBucketConsumer">
-        /// The token bucket consumer.
-        /// </param>
-        /// <param name="httpResponseFormatter">
-        /// The rate limit response formatter.
+        /// <param name="clientIdentifierProviders">
+        /// The client identifier providers.
         /// </param>
         /// <param name="logger">
         /// The logger.
         /// </param>
-        public RequestRateLimiterMiddleware(
+        public ClientResolutionMiddleware(
             RequestDelegate next,
             CongestionControlConfiguration configuration,
-            ITokenBucketConsumer tokenBucketConsumer,
-            IHttpResponseFormatter httpResponseFormatter,
-            ILogger<RequestRateLimiterMiddleware> logger)
+            IEnumerable<IClientIdentifierProvider> clientIdentifierProviders,
+            ILogger<ClientResolutionMiddleware> logger)
         {
             _next = next;
             _configuration = configuration;
-            _tokenBucketConsumer = tokenBucketConsumer;
-            _httpResponseFormatter = httpResponseFormatter;
+            _clientIdentifierProviders = clientIdentifierProviders;
             _logger = logger;
         }
 
@@ -110,28 +92,38 @@ namespace AspNetCore.CongestionControl
         /// The context for the active HTTP request.
         /// </param>
         /// <returns>
-        /// The next task in the middleware pipeline if the request is allowed; Otherwise,
+        /// The next task in the middleware pipeline if the request is successful; Otherwise,
         /// terminates the middleware pipeline execution and returns unsuccessful response.
         /// </returns>
         public async Task Invoke(HttpContext httpContext)
         {
-            var clientId = httpContext.Items.GetClientId();
+            string resolvedClientId = null;
 
-            var response = await _tokenBucketConsumer.ConsumeAsync(clientId, RequestedTokens);
-
-            if (!response.IsAllowed)
+            foreach (var provider in _clientIdentifierProviders)
             {
-                _logger.LogInformation("Request is not allowed by Congestion Control Token Bucket.");
+                resolvedClientId = await provider.ExecuteAsync(httpContext);
 
-                await _httpResponseFormatter.FormatAsync(httpContext, new RateLimitContext(
-                    remaining: response.Remaining,
-                    limit: response.Limit,
-                    httpStatusCode: (HttpStatusCode)_configuration.HttpStatusCode,
-                    source: RateLimiterName
-                ));
+                if (resolvedClientId != null) 
+                {
+                    _logger.LogInformation("Successfully resolved client {Client} using {Strategy}.", resolvedClientId, provider.GetType().Name);
+
+                    break;
+                }
+            }
+
+            if (!_configuration.AllowAnonymousClients && resolvedClientId == null)
+            {
+                _logger.LogInformation("No client identifier present in the request and anonymous clients are not allowed.");
+
+                httpContext.Response.ContentType = httpContext.Request.ContentType;
+                httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
 
                 return;
             }
+            
+            var clientId = resolvedClientId ?? Guid.NewGuid().ToString();
+
+            httpContext.Items.AddClientId(clientId);
 
             await _next(httpContext);
         }

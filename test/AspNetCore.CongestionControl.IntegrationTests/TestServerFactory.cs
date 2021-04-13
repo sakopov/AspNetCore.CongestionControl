@@ -1,8 +1,8 @@
 ﻿using System;
-using AspNetCore.CongestionControl.TestApi;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using AspNetCore.CongestionControl.TestApi;
 
 namespace AspNetCore.CongestionControl.IntegrationTests
 {

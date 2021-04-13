@@ -48,7 +48,7 @@ namespace AspNetCore.CongestionControl
         /// <summary>
         /// The logger.
         /// </summary>
-        private readonly ILogger<RedisConcurrentRequestsManager> _logger;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// The name of the Lua script.

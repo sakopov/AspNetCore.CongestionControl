@@ -1,9 +1,10 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using System.Linq;
+    using System;
     using Configuration;
     using Machine.Specifications;
     using Moq;
-    using System;
     using It = Machine.Specifications.It;
 
     class CongestionControlConfigurationTests
@@ -98,6 +99,40 @@
         }
 
         [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
+        public class When_adding_header_based_client_identifier_provider
+        {
+            Because of = () =>
+            {
+                _configuration.AddHeaderBasedClientIdentifierProvider();
+            };
+
+            It should_set_the_configuration_internally = () =>
+            {
+                _configuration.ClientIdentifierProviders.ShouldNotBeEmpty();
+                _configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(HeaderBasedClientIdentifierProvider)).ShouldBeTrue();
+            };
+
+            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+        }
+
+        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
+        public class When_adding_query_based_client_identifier_provider
+        {
+            Because of = () =>
+            {
+                _configuration.AddQueryBasedClientIdentifierProvider();
+            };
+
+            It should_set_the_configuration_internally = () =>
+            {
+                _configuration.ClientIdentifierProviders.ShouldNotBeEmpty();
+                _configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(QueryBasedClientIdentifierProvider)).ShouldBeTrue();
+            };
+
+            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+        }
+
+        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
         public class When_adding_custom_client_identifier_provider
         {
             Because of = () =>
@@ -107,7 +142,7 @@
 
             It should_set_the_configuration_internally = () =>
             {
-                _configuration.ClientIdentifierProvider.ShouldNotBeNull();
+                _configuration.ClientIdentifierProviders.ShouldNotBeEmpty();
             };
 
             static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();

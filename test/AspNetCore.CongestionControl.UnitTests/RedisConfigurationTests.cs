@@ -1,8 +1,8 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using System;
     using Configuration;
     using Machine.Specifications;
-    using System;
 
     class RedisConfigurationTests
     {

@@ -1,7 +1,7 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Machine.Specifications;
     using System.Net;
+    using Machine.Specifications;
 
     class RateLimitContextTests
     {

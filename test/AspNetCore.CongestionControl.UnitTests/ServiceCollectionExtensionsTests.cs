@@ -1,13 +1,13 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Configuration;
-    using Machine.Specifications;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.DependencyInjection;
-    using StackExchange.Redis;
-    using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using System;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.DependencyInjection;
+    using Configuration;
+    using Machine.Specifications;
+    using StackExchange.Redis;
     using It = Machine.Specifications.It;
 
     class ServiceCollectionExtensionsTests
@@ -23,7 +23,7 @@
             It should_throw_argument_null_exception = () =>
             {
                 _exception.ShouldBeOfExactType<ArgumentNullException>();
-                ((ArgumentNullException) _exception).ParamName.ShouldEqual("collection");
+                ((ArgumentNullException) _exception).ParamName.ShouldEqual("services");
             };
 
             static Exception _exception;
@@ -47,7 +47,7 @@
         }
 
         [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_client_identifier_provider_is_not_confiured
+        public class When_client_identifier_provider_is_not_configured
         {
             Because of = () =>
             {
@@ -59,8 +59,8 @@
 
             It should_set_client_identifier_provider_to_header_based_in_congestion_control_configuration = () =>
             {
-                _configuration.ClientIdentifierProvider.ShouldNotBeNull();
-                _configuration.ClientIdentifierProvider.ShouldBeOfExactType<HeaderBasedClientIdentifierProvider>();
+                _configuration.ClientIdentifierProviders.ShouldNotBeEmpty();
+                _configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(HeaderBasedClientIdentifierProvider)).ShouldBeTrue();
             };
 
             It should_add_client_identifier_provider_to_service_collection = () =>
@@ -96,8 +96,8 @@
 
             It should_set_client_identifier_provider_in_congestion_control_configuration = () =>
             {
-                _configuration.ClientIdentifierProvider.ShouldNotBeNull();
-                _configuration.ClientIdentifierProvider.ShouldBeOfExactType<CustomClientIdentifierProvider>();
+                _configuration.ClientIdentifierProviders.ShouldNotBeEmpty();
+                _configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(CustomClientIdentifierProvider)).ShouldBeTrue();
             };
 
             It should_add_client_identifier_provider_to_service_collection = () =>
@@ -194,6 +194,12 @@
                     .ShouldBeTrue();
             };
 
+            It should_add_in_memory_token_bucket_consumer_to_the_service_collection = () =>
+            {
+                _services.Any(service => service.ServiceType == typeof(ITokenBucketConsumer) && service.ImplementationType == typeof(InMemoryTokenBucketConsumer))
+                    .ShouldBeTrue();
+            };
+
             static CongestionControlConfiguration _configuration;
 
             static IServiceCollection _services = new ServiceCollection();
@@ -217,19 +223,26 @@
                     .ShouldBeTrue();
             };
 
+            It should_add_in_memory_concurrent_request_manager_to_the_service_collection = () =>
+            {
+                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) && service.ImplementationType == typeof(InMemoryConcurrentRequestsManager))
+                    .ShouldBeTrue();
+            };
+
             static CongestionControlConfiguration _configuration;
 
             static IServiceCollection _services = new ServiceCollection();
         }
 
         [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_redis_server_configuration_is_configured
+        public class When_redis_server_configuration_and_request_rate_limiter_are_configured
         {
             Because of = () =>
             {
                 _services.AddCongestionControl(options =>
                 {
                     options.AddRedisStorage("127.0.0.1:6379");
+                    options.AddRequestRateLimiter();
                     _configuration = options;
                 });
             };
@@ -245,17 +258,46 @@
                     .ShouldBeTrue();
             };
 
-            It should_add_redis_concurrent_request_tracker_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) &&
-                                         service.ImplementationType == typeof(RedisConcurrentRequestsManager))
-                    .ShouldBeTrue();
-            };
-
             It should_add_redis_token_bucket_consumer_to_the_service_collection = () =>
             {
                 _services.Any(service => service.ServiceType == typeof(ITokenBucketConsumer) &&
                                          service.ImplementationType == typeof(RedisTokenBucketConsumer))
+                    .ShouldBeTrue();
+            };
+
+            static CongestionControlConfiguration _configuration;
+
+            static IServiceCollection _services = new ServiceCollection();
+        }
+
+        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
+        public class When_redis_server_configuration_and_concurrent_request_limiter_are_configured
+        {
+            Because of = () =>
+            {
+                _services.AddCongestionControl(options =>
+                {
+                    options.AddRedisStorage("127.0.0.1:6379");
+                    options.AddConcurrentRequestLimiter();
+                    _configuration = options;
+                });
+            };
+
+            It should_set_redis_server_configuration_in_congestion_control_configuration = () =>
+            {
+                _configuration.RedisConfiguration.ShouldNotBeNull();
+            };
+
+            It should_add_redis_connection_multiplexer_to_the_service_collection = () =>
+            {
+                _services.Any(service => service.ServiceType == typeof(IConnectionMultiplexer))
+                    .ShouldBeTrue();
+            };
+
+            It should_add_redis_concurrent_request_manager_to_the_service_collection = () =>
+            {
+                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) &&
+                                         service.ImplementationType == typeof(RedisConcurrentRequestsManager))
                     .ShouldBeTrue();
             };
 
@@ -286,18 +328,18 @@
                     .ShouldBeFalse();
             };
 
-            It should_add_in_memory_concurrent_request_tracker_to_the_service_collection = () =>
+            It should_not_add_redis_concurrent_request_tracker_to_the_service_collection = () =>
             {
                 _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) &&
-                                         service.ImplementationType == typeof(InMemoryConcurrentRequestsManager))
-                    .ShouldBeTrue();
+                                         service.ImplementationType == typeof(RedisConcurrentRequestsManager))
+                    .ShouldBeFalse();
             };
 
-            It should_add_in_memory_token_bucket_consumer_to_the_service_collection = () =>
+            It should_not_add_redis_token_bucket_consumer_to_the_service_collection = () =>
             {
                 _services.Any(service => service.ServiceType == typeof(ITokenBucketConsumer) &&
-                                         service.ImplementationType == typeof(InMemoryTokenBucketConsumer))
-                    .ShouldBeTrue();
+                                         service.ImplementationType == typeof(RedisTokenBucketConsumer))
+                    .ShouldBeFalse();
             };
 
             static CongestionControlConfiguration _configuration;

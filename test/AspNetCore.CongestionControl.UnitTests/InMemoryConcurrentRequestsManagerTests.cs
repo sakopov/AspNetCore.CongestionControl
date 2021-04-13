@@ -1,10 +1,10 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using System;
+    using Microsoft.Extensions.Logging;
     using Configuration;
     using Machine.Specifications;
-    using Microsoft.Extensions.Logging;
     using Moq;
-    using System;
     using It = Machine.Specifications.It;
 
     class InMemoryConcurrentRequestsManagerTests

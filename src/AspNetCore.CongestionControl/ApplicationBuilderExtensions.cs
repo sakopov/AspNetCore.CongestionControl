@@ -25,6 +25,7 @@
 namespace AspNetCore.CongestionControl
 {
     using Microsoft.AspNetCore.Builder;
+    using AspNetCore.CongestionControl.Configuration;
 
     /// <summary>
     /// The extensions for <see cref="IApplicationBuilder"/> interface.
@@ -32,7 +33,7 @@ namespace AspNetCore.CongestionControl
     public static class ApplicationBuilderExtensions
     {
         /// <summary>
-        /// Adds the request rate limiter middleware.
+        /// Adds congestion control middleware.
         /// </summary>
         /// <param name="builder">
         /// The application builder.
@@ -40,23 +41,21 @@ namespace AspNetCore.CongestionControl
         /// <returns>
         /// The application builder.
         /// </returns>
-        public static IApplicationBuilder UseRequestRateLimiter(this IApplicationBuilder builder)
+        public static IApplicationBuilder UseCongestionControl(this IApplicationBuilder builder)
         {
-            return builder.UseMiddleware<RequestRateLimiterMiddleware>();
-        }
+            builder.UseMiddleware<ClientResolutionMiddleware>();
 
-        /// <summary>
-        /// Adds the concurrent requests limiter middleware.
-        /// </summary>
-        /// <param name="builder">
-        /// The application builder.
-        /// </param>
-        /// <returns>
-        /// The application builder.
-        /// </returns>
-        public static IApplicationBuilder UseConcurrentRequestLimiter(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<ConcurrentRequestLimiterMiddleware>();
+            if (builder.ApplicationServices.GetService(typeof(RequestRateLimiterConfiguration)) != null)
+            {
+                builder.UseMiddleware<RequestRateLimiterMiddleware>();
+            }
+
+            if (builder.ApplicationServices.GetService(typeof(ConcurrentRequestLimiterConfiguration)) != null)
+            {
+                builder.UseMiddleware<ConcurrentRequestLimiterMiddleware>();
+            }
+
+            return builder;
         }
     }
 }

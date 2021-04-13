@@ -53,7 +53,7 @@ namespace AspNetCore.CongestionControl
         /// <summary>
         /// The logger.
         /// </summary>
-        private readonly ILogger<RedisTokenBucketConsumer> _logger;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// The prepared Lua script.
