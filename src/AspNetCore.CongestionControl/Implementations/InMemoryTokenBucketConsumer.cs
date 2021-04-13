@@ -43,7 +43,7 @@ namespace AspNetCore.CongestionControl
         /// <summary>
         /// The logger.
         /// </summary>
-        private readonly ILogger<InMemoryTokenBucketConsumer> _logger;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// The lock sync object.

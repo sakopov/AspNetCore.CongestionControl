@@ -1,10 +1,10 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using System;
     using Configuration;
     using Machine.Specifications;
-    using System;
 
-    class ConcurrentRequestLimiterConfigurationTests
+    public class ConcurrentRequestLimiterConfigurationTests
     {
         [Subject(typeof(ConcurrentRequestLimiterConfiguration), "Concurrent Request Limiter Configuration"), Tags("Positive Test")]
         public class When_validate_is_called_while_using_default_configuration

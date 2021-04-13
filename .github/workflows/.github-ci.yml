@@ -1,0 +1,32 @@
+name: build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest    
+
+    steps:
+    - name: Setup .NET on CI runner
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.301
+
+  build:
+    needs: prepare
+    name: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build
+      env:
+        PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
+      run: dotnet build $PROJECT_PATH --configuration Release

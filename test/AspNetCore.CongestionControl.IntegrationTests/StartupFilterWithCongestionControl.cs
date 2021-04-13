@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace AspNetCore.CongestionControl.IntegrationTests
 {
-    class StartupFilterWithConcurrentRequestsRateLimiter : IStartupFilter
+    class StartupFilterWithCongestionControl : IStartupFilter
     {
         public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
         {
             return app =>
             {
-                app.UseConcurrentRequestLimiter();
+                app.UseCongestionControl();
 
                 next(app);
             };

@@ -1,5 +1,4 @@
-AspNetCore.CongestionControl
-=======
+# Congestion Control for AspNet Core
 
 [![Build status](https://ci.appveyor.com/api/projects/status/10hsvd062bymvl0y?svg=true)](https://ci.appveyor.com/project/sakopov/aspnetcore-congestioncontrol)
 [![NuGet Pre Release](https://img.shields.io/nuget/vpre/AspNetCore.CongestionControl.svg)](https://www.nuget.org/packages/AspNetCore.CongestionControl)
@@ -14,11 +13,40 @@ This library provides a set of middleware components designed to help maintain A
 
 Install [AspNetCore.CongestionControl with NuGet](https://www.nuget.org/packages/AspNetCore.CongestionControl)
 
-```
+```shell
 Install-Package AspNetCore.CongestionControl
 ```
 
-## Request Rate Limiter
+## Basic Usage
+
+The following example demostrates basic usage scenario which adds request rate limiting with default options.
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddCongestionControl();
+
+    ...
+
+    services.AddMvc();
+}
+
+public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+{
+    // Use the middleware
+    app.UseCongestionControl();
+
+    ...
+
+    app.UseMvc();
+}
+```
+
+## Overview
+
+The following section outlines all supported congestion control mechanism and their underlying behavior.
+
+### Request Rate Limiter
 
 The Request Rate Limiter restricts each client to *N* requests per time interval using [Token Bucket](https://en.wikipedia.org/wiki/Token_bucket) algorithm. It can allow brief traffic spikes to burst above the capacity of the bucket.
 
@@ -26,11 +54,11 @@ There are 3 parameters that define the behavior of the Request Rate Limiter.
 
 * **Interval** - the length of time unit (in seconds). The default value is *1 second*.
 * **Average Rate** - how many requests per *interval* a client is allowed to perform. The default value is *100 requests*.
-* **Bursting** - the bursting factor or how much bursting is allowed per *interval* which allows client to briefly go above the *averate rate* in a  traffic spikes. Note, *Bursting* * *Average Rate* = *Capacity* of the bucket. The default value is *5*.
+* **Bursting** - the bursting factor or how much bursting is allowed per *interval* which allows client to briefly go above the *averate rate* in a  traffic spikes. Note, *Bursting* x *Average Rate* = *Capacity* of the bucket. The default value is *5*.
 
-### Examples
+#### Example
 
-Use example below to configure and add the Request Rate Limiter middleware.
+Use example below to add and configure Request Rate Limiter middleware.
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
@@ -49,7 +77,7 @@ public void ConfigureServices(IServiceCollection services)
 public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 {
     // Use the middleware
-    app.UseRequestRateLimiter();
+    app.UseCongestionControl();
 
     ...
 
@@ -57,7 +85,7 @@ public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 }
 ```
 
-## Concurrent Request Limiter
+### Concurrent Request Limiter
 
 The Concurrent Request Limiter restricts how many requests a client can have executing at the same time. This request limiter can help minimize resource contention on expensive endpoints.
 
@@ -66,7 +94,7 @@ There are 2 parameters that define the behavior of the Concurrent Request Limite
 * **Capacity** - the number of requests a client can execute at the same time. The default value is *100 requests*.
 * **Request TTL** - the amount of time (in seconds) a client request can take. The default value is *60 seconds*.
 
-### Examples
+#### Example
 
 Use example below to configure and add the Concurrent Request Limiter middleware.
 
@@ -87,7 +115,7 @@ public void ConfigureServices(IServiceCollection services)
 public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 {
     // Use the middleware
-    app.UseConcurrentRequestLimiter();
+    app.UseCongestionControl();
 
     ...
 
@@ -95,18 +123,34 @@ public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 }
 ```
 
-## Client Identifiers
+### Client Identifiers
 
-All middleware components require a way to uniquely identify clients making requests to your API. A header-based client identification strategy is used by default where the client identifier is passed via `x-client-id` header. 
+All middleware components require a way to uniquely identify API clients. A header-based client identification strategy is used by default where the client identifier is passed via `x-api-key` header.
 
-Anonymous access is assumed if the client identifier cannot be found in the request. If you choose to define a custom header, you can do so as shown below.
+Anonymous access is assumed if the client identifier cannot be found in the request. Note, if you choose to define a custom header, you can do so by specifying it in `AddHeaderBasedClientIdentifierProvider` method.
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {
     services.AddCongestionControl(options =>
     {
-        options.AddHeaderBasedClientIdentifierProvider("my-client-id");
+        options.AddHeaderBasedClientIdentifierProvider();
+    });
+
+    ...
+
+    services.AddMvc();
+}
+```
+
+Alternatively, a query-based client identification strategy can be used to pass client identifier via `api_key` query string parameter. Note, if you choose to define a query string parameter, you can do so by specifying it in `AddQueryBasedClientIdentifierProvider` method.
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddCongestionControl(options =>
+    {
+        options.AddQueryBasedClientIdentifierProvider();
     });
 
     ...
@@ -141,6 +185,8 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
+Note, you can add multiple client providers if you choose to do so.
+
 ## HTTP Response Status Code
 
 If a request is rate-limited by any of the middleware, the client will receive a response with HTTP status code **429 / Too Many Requests** (unless configured otherwise) and content type matching that of the original request. It's possible to provide a custom status code via `HttpStatusCode` property.
@@ -164,7 +210,7 @@ public void ConfigureServices(IServiceCollection services)
 
 If you need to customize the rate limit response, you can do so my implementing `IHttpResponseFormatter`. The example below shows HTTP response formatter which adds `X-RateLimit-Limit` and `X-RateLimit-Remaining` headers to the response.
 
-> Note, it is not recommended to return rate limit and remaining number of requests if you're using both **Request Rate Limiter** and **Concurrent Request Limiter** simultaneously because each rate limiter throttles requests using different rate limits and the response can confuse the client. 
+> Note, it is not recommended to return rate limit and remaining number of requests if you're using both **Request Rate Limiter** and **Concurrent Request Limiter** simultaneously because each rate limiter throttles requests using different rate limits and the response can confuse the client.
 
 ```csharp
 public class MyCustomHttpResponseFormatter : IHttpResponseFormatter
@@ -218,26 +264,7 @@ public void ConfigureServices(IServiceCollection services)
 
 ## Considerations and Limitations
 
-### Order of Execution
-
-Each middleware component can run individually or in combination with the other. If you plan to use both types of rate limiters it is recommended to run them in the following order:
-
-1. Request Rate Limiter
-2. Concurrent Request Limiter
-
-```csharp
-public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-{
-    app.UseRequestRateLimiter();
-    app.UseConcurrentRequestLimiter();
-
-    ...
-
-    app.UseMvc();
-}
-```
-
-In addition, rate limiters should be one of the first middleware components executing in your middleware pipeline.
+Rate limiters should be one of the first middleware components executing in your middleware pipeline.
 
 ### Client-Specific Rate Limits
 

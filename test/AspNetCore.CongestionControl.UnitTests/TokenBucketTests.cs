@@ -1,9 +1,9 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Machine.Specifications;
-    using System;
     using System.Collections.Generic;
     using System.Threading;
+    using System;
+    using Machine.Specifications;
 
     class TokenBucketTests
     {

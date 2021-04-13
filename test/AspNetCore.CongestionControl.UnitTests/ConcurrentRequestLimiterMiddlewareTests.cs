@@ -1,12 +1,12 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Configuration;
-    using Machine.Specifications;
+    using System.Threading.Tasks;
+    using System;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
+    using Configuration;
+    using Machine.Specifications;
     using Moq;
-    using System;
-    using System.Threading.Tasks;
     using It = Machine.Specifications.It;
 
     class ConcurrentRequestLimiterMiddlewareTests
@@ -17,13 +17,8 @@
             Establish context = () =>
             {
                 _configuration = new CongestionControlConfiguration();
-                _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
                 _concurrentRequestTrackerMock = new Mock<IConcurrentRequestsManager>();
                 _loggerMock = new Mock<ILogger<ConcurrentRequestLimiterMiddleware>>();
-
-                _clientIdentifierProviderMock
-                    .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
-                    .ReturnsAsync(Guid.NewGuid().ToString);
 
                 _concurrentRequestTrackerMock
                     .Setup(mock => mock.AddAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<string>(), Moq.It.IsAny<long>()))
@@ -36,16 +31,18 @@
                     _isNextCalled = true;
                 }
 
+                _context.Items.AddClientId(Guid.NewGuid().ToString());
+
                 _middleware = new ConcurrentRequestLimiterMiddleware(Next, 
                     _configuration,
-                    _clientIdentifierProviderMock.Object,
                     _concurrentRequestTrackerMock.Object,
-                    new DefaultHttpResponseFormatter());
+                    new DefaultHttpResponseFormatter(),
+                    _loggerMock.Object);
             };
 
             Because of = () =>
             {
-                _middleware.Invoke(new DefaultHttpContext()).Await();
+                _middleware.Invoke(_context).Await();
             };
 
             It should_execute_next_delegate_in_pipeline = () =>
@@ -61,8 +58,8 @@
             };
 
             static bool _isNextCalled;
+            static DefaultHttpContext _context = new DefaultHttpContext();
             static CongestionControlConfiguration _configuration;
-            static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
             static Mock<IConcurrentRequestsManager> _concurrentRequestTrackerMock;
             static Mock<ILogger<ConcurrentRequestLimiterMiddleware>> _loggerMock;
             static ConcurrentRequestLimiterMiddleware _middleware;
@@ -74,14 +71,9 @@
             Establish context = () =>
             {
                 _configuration = new CongestionControlConfiguration();
-                _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
                 _concurrentRequestTrackerMock = new Mock<IConcurrentRequestsManager>();
                 _httpResponseFormatterMock = new Mock<IHttpResponseFormatter>();
                 _loggerMock = new Mock<ILogger<ConcurrentRequestLimiterMiddleware>>();
-
-                _clientIdentifierProviderMock
-                    .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
-                    .ReturnsAsync(Guid.NewGuid().ToString);
 
                 _concurrentRequestTrackerMock
                     .Setup(mock => mock.AddAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<string>(), Moq.It.IsAny<long>()))
@@ -96,13 +88,15 @@
 
                 _middleware = new ConcurrentRequestLimiterMiddleware(Next,
                     _configuration,
-                    _clientIdentifierProviderMock.Object,
                     _concurrentRequestTrackerMock.Object,
-                    _httpResponseFormatterMock.Object);
+                    _httpResponseFormatterMock.Object,
+                    _loggerMock.Object);
             };
 
             Because of = () =>
             {
+                _context.Items.AddClientId(Guid.NewGuid().ToString());
+
                 _middleware.Invoke(_context).Await();
             };
 
@@ -128,7 +122,6 @@
             static bool _isNextCalled;
             static HttpContext _context = new DefaultHttpContext();
             static CongestionControlConfiguration _configuration;
-            static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
             static Mock<IConcurrentRequestsManager> _concurrentRequestTrackerMock;
             static Mock<IHttpResponseFormatter> _httpResponseFormatterMock;
             static Mock<ILogger<ConcurrentRequestLimiterMiddleware>> _loggerMock;

@@ -4,14 +4,14 @@
     using Microsoft.AspNetCore.Http;
     using Machine.Specifications;
 
-    class HeaderBasedClientIdentifierProviderTests
+    class QueryStringBasedClientIdentifierProviderTests
     {
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Positive Test")]
-        public class When_client_set_client_identifier_in_headers
+        [Subject(typeof(QueryBasedClientIdentifierProvider), "Query-Based Client Identifier Provider"), Tags("Positive Test")]
+        public class When_client_set_client_identifier_in_query_string
         {
             Establish context = () =>
             {
-                _context.Request.Headers.Add(HeaderName, ClientId);
+                _context.Request.QueryString = new QueryString($"?{QueryStringParameter}={ClientId}");
             };
 
             Because of = () =>
@@ -24,21 +24,21 @@
                 _result.ShouldEqual(ClientId);
             };
 
-            const string HeaderName = "x-api-key";
+            const string QueryStringParameter = "api_key";
             const string ClientId = "tester";
 
             static string _result;
             static DefaultHttpContext _context = new DefaultHttpContext();
-            static HeaderBasedClientIdentifierProvider _provider = new HeaderBasedClientIdentifierProvider();
+            static QueryBasedClientIdentifierProvider _provider = new QueryBasedClientIdentifierProvider();
         }
 
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Positive Test")]
-        public class When_client_is_using_custom_header_name
+        [Subject(typeof(QueryBasedClientIdentifierProvider), "Query-Based Client Identifier Provider"), Tags("Positive Test")]
+        public class When_client_is_using_custom_query_string_parameter
         {
             Establish context = () =>
             {
-                _context.Request.Headers.Add(HeaderName, ClientId);
-                _provider = new HeaderBasedClientIdentifierProvider(HeaderName);
+                _context.Request.QueryString = new QueryString($"?{QueryStringParameter}={ClientId}");
+                _provider = new QueryBasedClientIdentifierProvider(QueryStringParameter);
             };
 
             Because of = () =>
@@ -51,16 +51,16 @@
                 _result.ShouldEqual(ClientId);
             };
 
-            const string HeaderName = "my-custom-header";
+            const string QueryStringParameter = "my-custom-parameter";
             const string ClientId = "tester";
 
             static string _result;
             static DefaultHttpContext _context = new DefaultHttpContext();
-            static HeaderBasedClientIdentifierProvider _provider;
+            static QueryBasedClientIdentifierProvider _provider;
         }
 
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Positive Test")]
-        public class When_client_does_not_set_client_identifier_in_headers
+        [Subject(typeof(QueryBasedClientIdentifierProvider), "Query-Based Client Identifier Provider"), Tags("Positive Test")]
+        public class When_client_does_not_set_client_identifier_in_query_string
         {
             Because of = () =>
             {
@@ -74,15 +74,15 @@
 
             static string _result;
             static DefaultHttpContext _context = new DefaultHttpContext();
-            static HeaderBasedClientIdentifierProvider _provider = new HeaderBasedClientIdentifierProvider();
+            static QueryBasedClientIdentifierProvider _provider = new QueryBasedClientIdentifierProvider();
         }
 
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Negative Test")]
-        public class When_header_name_is_not_provided
+        [Subject(typeof(QueryBasedClientIdentifierProvider), "Query-Based Client Identifier Provider"), Tags("Negative Test")]
+        public class When_query_string_parameter_is_not_provided
         {
             Because of = () =>
             {
-                _exception = Catch.Exception(() => new HeaderBasedClientIdentifierProvider(null));
+                _exception = Catch.Exception(() => new QueryBasedClientIdentifierProvider(null));
             };
 
             It should_throw_argument_null_exception = () =>

@@ -1,8 +1,8 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Machine.Specifications;
-    using Microsoft.AspNetCore.Http;
     using System.Net;
+    using Microsoft.AspNetCore.Http;
+    using Machine.Specifications;
 
     class DefaultHttpResponseFormatterTests
     {

@@ -1,8 +1,8 @@
 ﻿namespace AspNetCore.CongestionControl.UnitTests
 {
+    using Microsoft.Extensions.Logging;
     using Configuration;
     using Machine.Specifications;
-    using Microsoft.Extensions.Logging;
     using Moq;
     using It = Machine.Specifications.It;
 

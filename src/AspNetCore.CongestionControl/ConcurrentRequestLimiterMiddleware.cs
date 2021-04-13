@@ -24,11 +24,12 @@
 
 namespace AspNetCore.CongestionControl
 {
-    using Configuration;
-    using Microsoft.AspNetCore.Http;
-    using System;
     using System.Net;
     using System.Threading.Tasks;
+    using System;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Logging;
+    using Configuration;
 
     /// <summary>
     /// The middleware responsible for enforcing rate limiting of
@@ -47,11 +48,6 @@ namespace AspNetCore.CongestionControl
         private readonly CongestionControlConfiguration _configuration;
 
         /// <summary>
-        /// The client identifier provider.
-        /// </summary>
-        private readonly IClientIdentifierProvider _clientIdentifierProvider;
-
-        /// <summary>
         /// The concurrent requests manager.
         /// </summary>
         private readonly IConcurrentRequestsManager _concurrentRequestsManager;
@@ -60,6 +56,11 @@ namespace AspNetCore.CongestionControl
         /// The HTTP response formatter.
         /// </summary>
         private readonly IHttpResponseFormatter _httpResponseFormatter;
+
+        /// <summary>
+        /// The logger.
+        /// </summary>
+        private readonly ILogger _logger;
 
         /// <summary>
         /// The name of the rate limiter.
@@ -76,42 +77,42 @@ namespace AspNetCore.CongestionControl
         /// <param name="configuration">
         /// The congestion control configuration.
         /// </param>
-        /// <param name="clientIdentifierProvider">
-        /// The client identifier provider.
-        /// </param>
         /// <param name="concurrentRequestsManager">
         /// The concurrent request manager.
         /// </param>
         /// <param name="httpResponseFormatter">
         /// The HTTP response formatter.
         /// </param>
+        /// <param name="logger">
+        /// The logger.
+        /// </param>
         public ConcurrentRequestLimiterMiddleware(
             RequestDelegate next,
             CongestionControlConfiguration configuration,
-            IClientIdentifierProvider clientIdentifierProvider,
             IConcurrentRequestsManager concurrentRequestsManager,
-            IHttpResponseFormatter httpResponseFormatter)
+            IHttpResponseFormatter httpResponseFormatter,
+            ILogger<ConcurrentRequestLimiterMiddleware> logger)
         {
             _next = next;
             _configuration = configuration;
-            _clientIdentifierProvider = clientIdentifierProvider;
             _concurrentRequestsManager = concurrentRequestsManager;
             _httpResponseFormatter = httpResponseFormatter;
+            _logger = logger;
         }
 
         /// <summary>
         /// Begins middleware execution.
         /// </summary>
-        /// <param name="context">
+        /// <param name="httpContext">
         /// The context for the active HTTP request.
         /// </param>
         /// <returns>
         /// The next task in the middleware pipeline if the request is allowed; Otherwise,
         /// terminates the middleware pipeline execution and returns unsuccessful response.
         /// </returns>
-        public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext httpContext)
         {
-            var clientId = await _clientIdentifierProvider.ExecuteAsync(context);
+            var clientId = httpContext.Items.GetClientId();
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var requestId = Guid.NewGuid().ToString();
 
@@ -119,7 +120,9 @@ namespace AspNetCore.CongestionControl
 
             if (!response.IsAllowed)
             {
-                await _httpResponseFormatter.FormatAsync(context, new RateLimitContext(
+                _logger.LogInformation("Request is not allowed by Congestion Control Concurrent Request Manager.");
+
+                await _httpResponseFormatter.FormatAsync(httpContext, new RateLimitContext(
                     remaining: response.Remaining,
                     limit: response.Limit,
                     httpStatusCode: (HttpStatusCode)_configuration.HttpStatusCode,
@@ -129,7 +132,7 @@ namespace AspNetCore.CongestionControl
                 return;
             }
 
-            await _next(context);
+            await _next(httpContext);
 
             if (string.IsNullOrEmpty(requestId))
             {

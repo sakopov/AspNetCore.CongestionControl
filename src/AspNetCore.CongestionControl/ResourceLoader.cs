@@ -33,7 +33,7 @@ namespace AspNetCore.CongestionControl
     /// <summary>
     /// The helper class to load assembly resources.
     /// </summary>
-    public static class ResourceLoader
+    internal static class ResourceLoader
     {
         /// <summary>
         /// Loads resource from the assembly.
