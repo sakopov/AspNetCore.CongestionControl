@@ -26,6 +26,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Setup Redis
+      uses: shogo82148/actions-setup-redis@v1
+      with:
+        redis-version: '6.x'
+      run: redis-cli ping
+
     - name: Build
       env:
         PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
