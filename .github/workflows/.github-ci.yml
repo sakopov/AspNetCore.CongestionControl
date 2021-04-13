@@ -21,6 +21,9 @@ jobs:
     needs: prepare
     name: Build
     runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.new_tag }}
  
     steps:
     - name: Checkout
@@ -43,4 +46,20 @@ jobs:
       env:
         PROJECT_PATH: "./test/AspNetCore.CongestionControl.IntegrationTests/AspNetCore.CongestionControl.IntegrationTests.csproj"
       run: dotnet test $PROJECT_PATH
+
+    - name: Version
+      id: version
+      uses: hennejg/github-tag-action@v4.2.4
+      with:
+        release_branches: master
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Package
+      run: dotnet pack -v normal -c Release --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_tag }} src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: nupkg
+        path: ./src/AspNetCore.CongestionControl/bin/Release/*.nupkg
   
