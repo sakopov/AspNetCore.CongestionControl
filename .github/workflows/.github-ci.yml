@@ -17,9 +17,6 @@ jobs:
       with:
         dotnet-version: 3.1.301
 
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.2.0
-
   build:
     needs: prepare
     name: Build
@@ -38,6 +35,9 @@ jobs:
       env:
         PROJECT_PATH: "./test/AspNetCore.CongestionControl.UnitTests/AspNetCore.CongestionControl.UnitTests.csproj"
       run: dotnet test $PROJECT_PATH
+
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.2.0
 
     - name: Integration Test
       env:
