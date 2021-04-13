@@ -17,6 +17,9 @@ jobs:
       with:
         dotnet-version: 3.1.301
 
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.2.0
+
   build:
     needs: prepare
     name: Build
@@ -25,9 +28,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.2.0
 
     - name: Build
       env:
