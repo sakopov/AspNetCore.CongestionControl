@@ -26,14 +26,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Version
-      id: version
-      uses: hennejg/github-tag-action@v4.2.4
-      with:
-        release_branches: master
-        dry_run: true
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Build
       env:
         PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
