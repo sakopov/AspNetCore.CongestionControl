@@ -53,6 +53,7 @@ jobs:
       with:
         release_branches: master
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        dry_run: "true"
 
     - name: Package
       run: dotnet pack -v normal -c Release --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_tag }} src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj
