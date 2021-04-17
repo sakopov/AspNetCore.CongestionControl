@@ -26,15 +26,18 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Restore
+      run: dotnet restore
+
     - name: Build
       env:
         PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
-      run: dotnet build $PROJECT_PATH --configuration Release
+      run: dotnet build $PROJECT_PATH -c Release --no-restore
 
     - name: Unit Test
       env:
         PROJECT_PATH: "./test/AspNetCore.CongestionControl.UnitTests/AspNetCore.CongestionControl.UnitTests.csproj"
-      run: dotnet test $PROJECT_PATH
+      run: dotnet test $PROJECT_PATH -c Release --no-build
 
     - name: Start Redis
       uses: supercharge/redis-github-action@1.2.0
@@ -42,7 +45,7 @@ jobs:
     - name: Integration Test
       env:
         PROJECT_PATH: "./test/AspNetCore.CongestionControl.IntegrationTests/AspNetCore.CongestionControl.IntegrationTests.csproj"
-      run: dotnet test $PROJECT_PATH
+      run: dotnet test $PROJECT_PATH -c Release --no-build
 
     - name: Version
       id: version
@@ -55,7 +58,7 @@ jobs:
     - name: Package
       env:
         PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
-      run: dotnet pack -v normal -c Release --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_version }} $PROJECT_PATH
+      run: dotnet pack -v normal -c Release --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_version }} $PROJECT_PATH
     
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
@@ -63,3 +66,23 @@ jobs:
         name: nupkg
         path: ./src/AspNetCore.CongestionControl/bin/Release/*.nupkg
   
+  publish:
+    needs: prepare
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: nupkg
+
+      - name: Push to GitHub Feed
+        run: |
+          for f in ./nupkg/*.nupkg
+          do
+            curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
+          done
+
+      - name: Push to NuGet Feed
+        run: dotnet nuget push ./nupkg/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key $NUGET_KEY
