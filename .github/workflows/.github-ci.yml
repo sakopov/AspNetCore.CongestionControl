@@ -56,7 +56,9 @@ jobs:
         dry_run: "true"
 
     - name: Package
-      run: dotnet pack -v normal -c Release --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_tag }} src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj
+      env:
+        PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
+      run: dotnet pack -v normal -c Release --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_tag }} $PROJECT_PATH
     
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
