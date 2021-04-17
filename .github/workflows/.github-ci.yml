@@ -7,6 +7,7 @@ on:
     branches: [ master ]
 
 env:
+  # Project paths
   PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
   UNIT_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.UnitTests/AspNetCore.CongestionControl.UnitTests.csproj"
   INTEGRATION_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.IntegrationTests/AspNetCore.CongestionControl.IntegrationTests.csproj"
@@ -61,12 +62,13 @@ jobs:
       with:
         release_branches: master
         github_token: $GITHUB_TOKEN
-        dry_run: "true"
 
     - name: Package
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       run: dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_version }} $PROJECT_PATH
     
     - name: Upload Artifact
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v2
       with:
         name: nupkg
@@ -76,19 +78,13 @@ jobs:
     needs: build
     name: Publish
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
 
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v1
         with:
           name: nupkg
-
-      - name: Push to GitHub Feed
-        run: |
-          for f in ./nupkg/*.nupkg
-          do
-            curl -vX PUT -u "$GITHUB_USER:$GITHUB_TOKEN" -F package=@$f $GITHUB_FEED
-          done
 
       - name: Push to NuGet Feed
         run: dotnet nuget push ./nupkg/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key $NUGET_KEY
