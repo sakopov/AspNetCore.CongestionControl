@@ -12,9 +12,7 @@ env:
   UNIT_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.UnitTests/AspNetCore.CongestionControl.UnitTests.csproj"
   INTEGRATION_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.IntegrationTests/AspNetCore.CongestionControl.IntegrationTests.csproj"
 
-  # GitHub Packages Feed settings
-  GITHUB_FEED: https://nuget.pkg.github.com/AspNetCore.CongestionControl/
-  GITHUB_USER: sakopov
+  # GitHub settings
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Official NuGet Feed settings
