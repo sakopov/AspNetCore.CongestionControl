@@ -30,9 +30,7 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      env:
-        PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
-      run: dotnet build $PROJECT_PATH -c Release --no-restore
+      run: dotnet build -c Release --no-restore
 
     - name: Unit Test
       env:
@@ -67,8 +65,8 @@ jobs:
         path: ./src/AspNetCore.CongestionControl/bin/Release/*.nupkg
   
   publish:
-    needs: prepare
-    name: Build
+    needs: build
+    name: Publish
     runs-on: ubuntu-latest
 
     steps:
