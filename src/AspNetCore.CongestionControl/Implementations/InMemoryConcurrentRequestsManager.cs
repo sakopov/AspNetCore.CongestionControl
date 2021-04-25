@@ -1,17 +1,17 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="InMemoryConcurrentRequestsManager.cs">
-//   Copyright (c) 2018 Sergey Akopov
-//   
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
 //   of this software and associated documentation files (the "Software"), to deal
 //   in the Software without restriction, including without limitation the rights
 //   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //   copies of the Software, and to permit persons to whom the Software is
 //   furnished to do so, subject to the following conditions:
-//   
+//
 //   The above copyright notice and this permission notice shall be included in
 //   all copies or substantial portions of the Software.
-//   
+//
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -96,7 +96,7 @@ namespace AspNetCore.CongestionControl
 
             lock (_syncObject)
             {
-                _logger.LogDebug("Received request {0} from client {1} with timestamp {2}.", 
+                _logger.LogDebug("Received request {0} from client {1} with timestamp {2}.",
                     requestId, clientId, timestamp);
 
                 if (!_map.TryGetValue(key, out var sortedSet))
@@ -112,20 +112,20 @@ namespace AspNetCore.CongestionControl
 
                 if (isAllowed)
                 {
-                    _logger.LogInformation("Allowed request {0} from client {1} with timestamp {2}. The client has {3} request(s) remaining.", 
+                    _logger.LogInformation("Allowed request {0} from client {1} with timestamp {2}. The client has {3} request(s) remaining.",
                         requestId, clientId, timestamp, capacity - sortedSet.Length);
 
                     sortedSet.Insert(timestamp, requestId);
                 }
                 else
                 {
-                    _logger.LogInformation("Rejected request {0} from client {1} with timestamp {2}. The client has {3} request(s) remaining.", 
+                    _logger.LogInformation("Rejected request {0} from client {1} with timestamp {2}. The client has {3} request(s) remaining.",
                         requestId, clientId, timestamp, capacity - sortedSet.Length);
                 }
 
                 return Task.FromResult(new AddConcurrentRequestResult(
-                    isAllowed: isAllowed, 
-                    remaining: capacity - sortedSet.Length, 
+                    isAllowed: isAllowed,
+                    remaining: capacity - sortedSet.Length,
                     limit: capacity
                 ));
             }
@@ -160,7 +160,7 @@ namespace AspNetCore.CongestionControl
 
                 _logger.LogDebug(isRemoved
                     ? "Removed request {0} for client {1} at {2}."
-                    : "Couldn't remove request {0} for client {1} at {2}.", 
+                    : "Couldn't remove request {0} for client {1} at {2}.",
                     requestId, clientId, timestamp);
 
                 return Task.FromResult(isRemoved);
