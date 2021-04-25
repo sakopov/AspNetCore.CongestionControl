@@ -1,3 +1,6 @@
+*.user
+*.suo
+*.nupkg
 bin
 obj
 cache.db

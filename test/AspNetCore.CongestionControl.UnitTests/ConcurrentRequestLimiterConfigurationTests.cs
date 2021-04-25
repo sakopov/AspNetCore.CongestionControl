@@ -1,115 +1,104 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ConcurrentRequestLimiterConfigurationTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
     using System;
     using Configuration;
-    using Machine.Specifications;
+    using FluentAssertions;
+    using Xunit;
 
     public class ConcurrentRequestLimiterConfigurationTests
     {
-        [Subject(typeof(ConcurrentRequestLimiterConfiguration), "Concurrent Request Limiter Configuration"), Tags("Positive Test")]
-        public class When_validate_is_called_while_using_default_configuration
+        [Fact(DisplayName = "Validate with Default Configuration")]
+        public void ValidateWithDefaultConfiguration()
         {
-            Establish context = () =>
-            {
-                _configuration = new ConcurrentRequestLimiterConfiguration();
-            };
+            // Given
+            var configuration = new ConcurrentRequestLimiterConfiguration();
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_successfully_validate = () =>
-            {
-                _exception.ShouldBeNull();
-            };
-
-            static Exception _exception;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // Then it should successfully validate
+            exception.Should().BeNull();
         }
 
-        [Subject(typeof(ConcurrentRequestLimiterConfiguration), "Concurrent Request Limiter Configuration"), Tags("Negative Test")]
-        public class When_validate_is_called_and_capacity_is_zero
+        [Fact(DisplayName = "Validate with Zero Capacity")]
+        public void ValidateWithZeroCapacity()
         {
-            Establish context = () =>
+            // Given
+            var configuration = new ConcurrentRequestLimiterConfiguration
             {
-                _configuration = new ConcurrentRequestLimiterConfiguration
-                {
-                    Capacity = 0
-                };
+                Capacity = 0
             };
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_throw_argument_out_of_range_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentOutOfRangeException>();
-                _exception.Message.ShouldContain("Capacity must be greater than 0.");
-                ((ArgumentOutOfRangeException)_exception).ParamName.ShouldEqual("Capacity");
-            };
-
-            static Exception _exception;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // Then it should throw ArgumentOutOfRangeException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentOutOfRangeException>();
+            exception.Message.Should().Contain("Capacity must be greater than 0.");
+            ((ArgumentOutOfRangeException)exception).ParamName.Should().Be("Capacity");
         }
 
-        [Subject(typeof(ConcurrentRequestLimiterConfiguration), "Concurrent Request Limiter Configuration"), Tags("Negative Test")]
-        public class When_validate_is_called_and_ttl_is_zero
+        [Fact(DisplayName = "Validate with Zero TTL")]
+        public void ValidateWithZeroTimeToLive()
         {
-            Establish context = () =>
+            // Given
+            var configuration = new ConcurrentRequestLimiterConfiguration
             {
-                _configuration = new ConcurrentRequestLimiterConfiguration
-                {
-                    RequestTimeToLive = 0
-                };
+                RequestTimeToLive = 0
             };
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_throw_argument_out_of_range_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentOutOfRangeException>();
-                _exception.Message.ShouldContain("Request time-to-live must be greater than 0.");
-                ((ArgumentOutOfRangeException)_exception).ParamName.ShouldEqual("RequestTimeToLive");
-            };
-
-            static Exception _exception;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // Then it should throw ArgumentOutOfRangeException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentOutOfRangeException>();
+            exception.Message.Should().Contain("Request time-to-live must be greater than 0.");
+            ((ArgumentOutOfRangeException)exception).ParamName.Should().Be("RequestTimeToLive");
         }
 
-        [Subject(typeof(ConcurrentRequestLimiterConfiguration), "Concurrent Request Limiter Configuration"), Tags("Negative Test")]
-        public class When_validate_is_called_and_key_prefix_is_null
+        [Fact(DisplayName = "Validate with Null Key Prefix")]
+        public void ValidateWithNullKeyPrefix()
         {
-            Establish context = () =>
+            // Given
+            var configuration = new ConcurrentRequestLimiterConfiguration
             {
-                _configuration = new ConcurrentRequestLimiterConfiguration
-                {
-                    KeysPrefix = null
-                };
+                KeysPrefix = null
             };
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_throw_argument_null_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentNullException>();
-                _exception.Message.ShouldContain("Keys prefix must be provided.");
-                ((ArgumentNullException)_exception).ParamName.ShouldEqual("KeysPrefix");
-            };
-
-            static Exception _exception;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // It should throw ArgumentNullException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentNullException>();
+            exception.Message.Should().Contain("Keys prefix must be provided.");
+            ((ArgumentNullException)exception).ParamName.Should().Be("KeysPrefix");
         }
     }
 }

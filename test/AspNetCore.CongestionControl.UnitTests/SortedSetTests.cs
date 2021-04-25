@@ -1,248 +1,194 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="SortedSetTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Machine.Specifications;
+    using FluentAssertions;
+    using Xunit;
 
-    class SortedSetTests
+    public class SortedSetTests
     {
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Positive Test")]
-        public class When_inserting_new_score_and_element
+        [Fact(DisplayName = "Inserting New Score and Element")]
+        public void InsertingNewScoreAndElement()
         {
-            Because of = () =>
-            {
-                _result = _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
 
-            It should_successfully_insert = () =>
-            {
-                _result.ShouldBeTrue();
-                _sortedSet.Length.ShouldEqual(1);
-            };
+            // When a score is inserted
+            var result = sortedSet.Insert(1, "one");
 
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should successfully insert
+            result.Should().BeTrue();
+            sortedSet.Length.Should().Be(1);
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Positive Test")]
-        public class When_inserting_existing_score_with_new_element
+        [Fact(DisplayName = "Inserting Existing Score with New Element")]
+        public void InsertingExistingScoreWithNewElement()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Insert(1, "two");
-            };
+            // When an existing score is inserted using new element
+            var result = sortedSet.Insert(1, "two");
 
-            It should_successfully_insert = () =>
-            {
-                _result.ShouldBeTrue();
-                _sortedSet.Length.ShouldEqual(2);
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should successfully insert
+            result.Should().BeTrue();
+            sortedSet.Length.Should().Be(2);
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Negative Test")]
-        public class When_inserting_a_duplicate
+        [Fact(DisplayName = "Inserting a Duplicate")]
+        public void InsertingADuplicate()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Insert(1, "one");
-            };
+            // When a duplicate is inserted
+            var result = sortedSet.Insert(1, "one");
 
-            It should_not_insert = () =>
-            {
-                _result.ShouldBeFalse();
-                _sortedSet.Length.ShouldEqual(1);
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should not insert
+            result.Should().BeFalse();
+            sortedSet.Length.Should().Be(1);
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Positive Test")]
-        public class When_deleting_by_existing_score_and_element
+        [Fact(DisplayName = "Deleting by Existing Score and Element")]
+        public void DeletingByExistingScoreAndElement()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Delete(1, "one");
-            };
+            // When existing score and element are deleted
+            var result = sortedSet.Delete(1, "one");
 
-            It should_successfully_delete = () =>
-            {
-                _result.ShouldBeTrue();
-                _sortedSet.Length.ShouldEqual(0);
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should successfully delete
+            result.Should().BeTrue();
+            sortedSet.Length.Should().Be(0);
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Negative Test")]
-        public class When_deleting_by_nonexisting_score_and_element
+        [Fact(DisplayName = "Deleting by Non-Existing Score and Element")]
+        public void DeletingByNonExistingScoreAndElement()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Delete(1, "two");
-            };
+            // When deleting a non-existing score and element
+            var result = sortedSet.Delete(1, "two");
 
-            It should_not_delete = () =>
-            {
-                _result.ShouldBeFalse();
-                _sortedSet.Length.ShouldEqual(1);
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should not delete
+            result.Should().BeFalse();
+            sortedSet.Length.Should().Be(1);
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Positive Test")]
-        public class When_deleting_by_existing_element
+        [Fact(DisplayName = "Deleting by Existing Element")]
+        public void DeletingByExistingElement()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Delete("one");
-            };
+            // When an existing element is deleted
+            var result = sortedSet.Delete("one");
 
-            It should_successfully_delete = () =>
-            {
-                _result.ShouldBeTrue();
-                _sortedSet.Length.ShouldEqual(0);
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should successfully delete
+            result.Should().BeTrue();
+            sortedSet.Length.Should().Be(0);
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Negative Test")]
-        public class When_deleting_by_nonexisting_element
+        [Fact(DisplayName = "Deleting by Non-Existing Element")]
+        public void DeletingByNonExistingElement()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Delete("two");
-            };
+            // When a non-existing element is deleted
+            var result = sortedSet.Delete("two");
 
-            It should_not_delete = () =>
-            {
-                _result.ShouldBeFalse();
-                _sortedSet.Length.ShouldEqual(1);
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should not delete
+            result.Should().BeFalse();
+            sortedSet.Length.Should().Be(1);
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Positive Test")]
-        public class When_updating_existing_score_and_element
+        [Fact(DisplayName = "Updating Existing Score and Element")]
+        public void UpdatingExistingScoreAndElement()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Update(1, "one", 2);
-            };
+            // When an existing score and element are updated
+            var result = sortedSet.Update(1, "one", 2);
 
-            It should_successfully_update = () =>
-            {
-                _result.ShouldBeTrue();
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should successfully update
+            result.Should().BeTrue();
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Negative Test")]
-        public class When_updating_nonexisting_score_and_element
+        [Fact(DisplayName = "Updating Non-Existing Score and Element")]
+        public void UpdatingNonExistingScoreAndElement()
         {
-            Because of = () =>
-            {
-                _result = _sortedSet.Update(1, "one", 2);
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
 
-            It should_not_update = () =>
-            {
-                _result.ShouldBeFalse();
-            };
+            // When a non-existing score/element are updated
+            var result = sortedSet.Update(1, "one", 2);
 
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should not update
+            result.Should().BeFalse();
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Negative Test")]
-        public class When_updating_existing_score_and_with_invalid_element
+        [Fact(DisplayName = "Updating Existing Score with Invalid Element")]
+        public void UpdatingExistingScoreWithInvalidElement()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
 
-            Because of = () =>
-            {
-                _result = _sortedSet.Update(1, "two", 2);
-            };
+            // When an existing score is updated with invalid element
+            var result = sortedSet.Update(1, "two", 2);
 
-            It should_not_update = () =>
-            {
-                _result.ShouldBeFalse();
-            };
-
-            static bool _result;
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // Then it should not update
+            result.Should().BeFalse();
         }
 
-        [Subject(typeof(SortedSet.SortedSet), "Sorted Set"), Tags("Positive Test")]
-        public class When_deleting_a_range_of_items
+        [Fact(DisplayName = "Deleting a Range of Items")]
+        public void DeletingARangeOfItems()
         {
-            Establish context = () =>
-            {
-                _sortedSet.Insert(1, "one");
-                _sortedSet.Insert(2, "two");
-                _sortedSet.Insert(3, "three");
-                _sortedSet.Insert(4, "four");
-            };
+            // Given
+            var sortedSet = new SortedSet.SortedSet();
+            sortedSet.Insert(1, "one");
+            sortedSet.Insert(2, "two");
+            sortedSet.Insert(3, "three");
+            sortedSet.Insert(4, "four");
 
-            Because of = () =>
-            {
-                _sortedSet.DeleteRangeByScore(1, 3);
-            };
+            // When deleting a range of items
+            sortedSet.DeleteRangeByScore(1, 3);
 
-            It should_successfully_update = () =>
-            {
-                _sortedSet.Length.ShouldEqual(1);
-            };
-
-            static SortedSet.SortedSet _sortedSet = new SortedSet.SortedSet();
+            // It should successfully delete
+            sortedSet.Length.Should().Be(1);
         }
     }
 }

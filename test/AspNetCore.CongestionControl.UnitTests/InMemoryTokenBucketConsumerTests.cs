@@ -1,115 +1,105 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="InMemoryTokenBucketConsumerTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
     using Microsoft.Extensions.Logging;
     using Configuration;
-    using Machine.Specifications;
+    using FluentAssertions;
     using Moq;
-    using It = Machine.Specifications.It;
+    using Xunit;
 
-    class InMemoryTokenBucketConsumerTests
+    public class InMemoryTokenBucketConsumerTests
     {
-        [Subject(typeof(InMemoryTokenBucketConsumer), "In-Memory Token Bucket Consumer"), Tags("Positive Test")]
-        public class When_client_consumes_a_token_for_the_first_time
+        [Fact(DisplayName = "A Token is Consumed For the First Time")]
+        public async void ATokenIsConsumedForTheFirstTime()
         {
-            Establish context = () =>
-            {
-                _configuration = new RequestRateLimiterConfiguration();
-                _consumer = new InMemoryTokenBucketConsumer(_configuration, _loggerMock.Object);
-
-                _capacity = _configuration.AverageRate * _configuration.Bursting;
-            };
-
-            Because of = () =>
-            {
-                _response = _consumer.ConsumeAsync(ClientId, Requested).Await();
-            };
-
-            It should_allow_token_consumption = () =>
-            {
-                _response.IsAllowed.ShouldBeTrue();
-                _response.Limit.ShouldEqual(_capacity);
-                _response.Remaining.ShouldEqual(_capacity - 1);
-            };
-
+            // Given
             const string ClientId = "tester";
             const int Requested = 1;
 
-            static int _capacity;
-            static ConsumeResult _response;
-            static RequestRateLimiterConfiguration _configuration;
-            static InMemoryTokenBucketConsumer _consumer;
-            static Mock<ILogger<InMemoryTokenBucketConsumer>> _loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
+            var configuration = new RequestRateLimiterConfiguration();
+            var loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
+            var consumer = new InMemoryTokenBucketConsumer(configuration, loggerMock.Object);
+
+            var capacity = configuration.AverageRate * configuration.Bursting;
+
+            // When a token is consumed
+            var response = await consumer.ConsumeAsync(ClientId, Requested);
+
+            // Then it should allow token consumption
+            response.IsAllowed.Should().BeTrue();
+            response.Limit.Should().Be(capacity);
+            response.Remaining.Should().Be(capacity - 1);
         }
 
-        [Subject(typeof(InMemoryTokenBucketConsumer), "In-Memory Token Bucket Consumer"), Tags("Positive Test")]
-        public class When_client_consumes_tokens_repeatedly
+        [Fact(DisplayName = "A Token is Consumed Repeatedly")]
+        public async void ATokenIsConsumedRepeatedly()
         {
-            Establish context = () =>
-            {
-                _configuration = new RequestRateLimiterConfiguration();
-                _consumer = new InMemoryTokenBucketConsumer(_configuration, _loggerMock.Object);
-                _consumer.ConsumeAsync(ClientId, PreviousConsumptionCount).Await();
-
-                _capacity = _configuration.AverageRate * _configuration.Bursting;
-            };
-
-            Because of = () =>
-            {
-                _response = _consumer.ConsumeAsync(ClientId, Requested).Await();
-            };
-
-            It should_allow_token_consumption = () =>
-            {
-                _response.IsAllowed.ShouldBeTrue();
-                _response.Limit.ShouldEqual(_capacity);
-                _response.Remaining.ShouldEqual(_capacity - PreviousConsumptionCount - Requested);
-            };
-
+            // Given
             const string ClientId = "tester";
             const int Requested = 1;
             const int PreviousConsumptionCount = 5;
 
-            static int _capacity;
-            static ConsumeResult _response;
-            static RequestRateLimiterConfiguration _configuration;
-            static InMemoryTokenBucketConsumer _consumer;
-            static Mock<ILogger<InMemoryTokenBucketConsumer>> _loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
+            var configuration = new RequestRateLimiterConfiguration();
+            var loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
+            var consumer = new InMemoryTokenBucketConsumer(configuration, loggerMock.Object);
+
+            await consumer.ConsumeAsync(ClientId, PreviousConsumptionCount);
+
+            var capacity = configuration.AverageRate * configuration.Bursting;
+
+            // When a token is consumed
+            var response = await consumer.ConsumeAsync(ClientId, Requested);
+
+            // Then it should allow token consumption
+            response.IsAllowed.Should().BeTrue();
+            response.Limit.Should().Be(capacity);
+            response.Remaining.Should().Be(capacity - PreviousConsumptionCount - Requested);
         }
 
-        [Subject(typeof(InMemoryTokenBucketConsumer), "In-Memory Token Bucket Consumer"), Tags("Negative Test")]
-        public class When_client_consumes_all_available_tokens
+        [Fact(DisplayName = "All Available Tokens are Consumed")]
+        public async void AllAvailableTokensAreConsumed()
         {
-            Establish context = () =>
-            {
-                _configuration = new RequestRateLimiterConfiguration();
-
-                _consumer = new InMemoryTokenBucketConsumer(_configuration, _loggerMock.Object);
-
-                _capacity = _configuration.AverageRate * _configuration.Bursting;
-
-                _consumer.ConsumeAsync(ClientId, _capacity).Await();
-            };
-
-            Because of = () =>
-            {
-                _response = _consumer.ConsumeAsync(ClientId, Requested).Await();
-            };
-
-            It should_not_allow_token_consumption = () =>
-            {
-                _response.IsAllowed.ShouldBeFalse();
-                _response.Limit.ShouldEqual(_capacity);
-                _response.Remaining.ShouldEqual(0);
-            };
-
+            // Given
             const string ClientId = "tester";
             const int Requested = 1;
 
-            static int _capacity;
-            static ConsumeResult _response;
-            static RequestRateLimiterConfiguration _configuration;
-            static InMemoryTokenBucketConsumer _consumer;
-            static Mock<ILogger<InMemoryTokenBucketConsumer>> _loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
+            var configuration = new RequestRateLimiterConfiguration();
+            var loggerMock = new Mock<ILogger<InMemoryTokenBucketConsumer>>();
+            var consumer = new InMemoryTokenBucketConsumer(configuration, loggerMock.Object);
+            var capacity = configuration.AverageRate * configuration.Bursting;
+
+            await consumer.ConsumeAsync(ClientId, capacity);
+
+            // When a token is consumed
+            var response = await consumer.ConsumeAsync(ClientId, Requested);
+
+            // Then it should not allow consumption
+            response.IsAllowed.Should().BeFalse();
+            response.Limit.Should().Be(capacity);
+            response.Remaining.Should().Be(0);
         }
     }
 }

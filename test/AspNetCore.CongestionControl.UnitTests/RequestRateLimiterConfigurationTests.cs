@@ -1,143 +1,123 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="RequestRateLimiterConfigurationTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Configuration;
-    using Machine.Specifications;
     using System;
+    using Configuration;
+    using FluentAssertions;
+    using Xunit;
 
-    class RequestRateLimiterConfigurationTests
+    public class RequestRateLimiterConfigurationTests
     {
-        [Subject(typeof(RequestRateLimiterConfiguration), "Request Rate Limiter Configuration"), Tags("Positive Test")]
-        public class When_validate_is_called_while_using_default_configuration
+        [Fact(DisplayName = "Configuration Validated While Using Default Options")]
+        public void ConfigurationValidatedWhileUsingDefaultOptions()
         {
-            Establish context = () =>
-            {
-                _configuration = new RequestRateLimiterConfiguration();
-            };
+            // Given
+            var configuration = new RequestRateLimiterConfiguration();
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_successfully_validate = () =>
-            {
-                _exception.ShouldBeNull();
-            };
-
-            static Exception _exception;
-            static RequestRateLimiterConfiguration _configuration;
+            // Then it should successfully validate
+            exception.Should().BeNull();
         }
 
-        [Subject(typeof(RequestRateLimiterConfiguration), "Request Rate Limiter Configuration"), Tags("Negative Test")]
-        public class When_validate_is_called_and_average_rate_is_zero
+        [Fact(DisplayName = "Configuration Validated With Average Rate Set To Zero")]
+        public void ConfigurationValidatedWithAverageRateSetToZero()
         {
-            Establish context = () =>
+            // Given
+            var configuration = new RequestRateLimiterConfiguration
             {
-                _configuration = new RequestRateLimiterConfiguration
-                {
-                    AverageRate = 0
-                };
+                AverageRate = 0
             };
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_throw_argument_out_of_range_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentOutOfRangeException>();
-                _exception.Message.ShouldContain("Average rate must be greater than 0.");
-                ((ArgumentOutOfRangeException)_exception).ParamName.ShouldEqual("AverageRate");
-            };
-
-            static Exception _exception;
-            static RequestRateLimiterConfiguration _configuration;
+            // Then it should throw ArgumentOutOfRangeException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentOutOfRangeException>();
+            exception.Message.Should().Contain("Average rate must be greater than 0.");
+            ((ArgumentOutOfRangeException)exception).ParamName.Should().Be("AverageRate");
         }
 
-        [Subject(typeof(RequestRateLimiterConfiguration), "Request Rate Limiter Configuration"), Tags("Negative Test")]
-        public class When_validate_is_called_and_interval_is_zero
+        [Fact(DisplayName = "Configuration Validated With Interval Set To Zero")]
+        public void ConfigurationValidatedWithInternvalSetToZero()
         {
-            Establish context = () =>
+            // Given
+            var configuration = new RequestRateLimiterConfiguration
             {
-                _configuration = new RequestRateLimiterConfiguration
-                {
-                    Interval = 0
-                };
+                Interval = 0
             };
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_throw_argument_out_of_range_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentOutOfRangeException>();
-                _exception.Message.ShouldContain("Interval must be greater than 0.");
-                ((ArgumentOutOfRangeException)_exception).ParamName.ShouldEqual("Interval");
-            };
-
-            static Exception _exception;
-            static RequestRateLimiterConfiguration _configuration;
+            // Then it should throw ArgumentOutOfRangeException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentOutOfRangeException>();
+            exception.Message.Should().Contain("Interval must be greater than 0.");
+            ((ArgumentOutOfRangeException)exception).ParamName.Should().Be("Interval");
         }
 
-        [Subject(typeof(RequestRateLimiterConfiguration), "Request Rate Limiter Configuration"), Tags("Negative Test")]
-        public class When_validate_is_called_and_bursting_is_zero
+        [Fact(DisplayName = "Configuration Validated With Bursting Set To Zero")]
+        public void ConfigurationValidatedWithBurstingSetToZero()
         {
-            Establish context = () =>
+            // Given
+            var configuration = new RequestRateLimiterConfiguration
             {
-                _configuration = new RequestRateLimiterConfiguration
-                {
-                    Bursting = 0
-                };
+                Bursting = 0
             };
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_throw_argument_out_of_range_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentOutOfRangeException>();
-                _exception.Message.ShouldContain("Bursting must be greater than 0.");
-                ((ArgumentOutOfRangeException)_exception).ParamName.ShouldEqual("Bursting");
-            };
-
-            static Exception _exception;
-            static RequestRateLimiterConfiguration _configuration;
+            // Then it should throw ArgumentOutOfRangeException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentOutOfRangeException>();
+            exception.Message.Should().Contain("Bursting must be greater than 0.");
+            ((ArgumentOutOfRangeException)exception).ParamName.Should().Be("Bursting");
         }
 
-        [Subject(typeof(RequestRateLimiterConfiguration), "Request Rate Limiter Configuration"), Tags("Negative Test")]
-        public class When_validate_is_called_and_keys_prefix_is_null
+        [Fact(DisplayName = "Configuration Validated With Keys Prefix Set To Null")]
+        public void ConfigurationValidatedWithKeysPrefixSetToNull()
         {
-            Establish context = () =>
+            // Given
+            var configuration = new RequestRateLimiterConfiguration
             {
-                _configuration = new RequestRateLimiterConfiguration
-                {
-                    KeysPrefix = null
-                };
+                KeysPrefix = null
             };
 
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.Validate());
-            };
+            // When configuration is validated
+            var exception = Record.Exception(() => configuration.Validate());
 
-            It should_throw_argument_null_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentNullException>();
-                _exception.Message.ShouldContain("Keys prefix must be provided.");
-                ((ArgumentNullException)_exception).ParamName.ShouldEqual("KeysPrefix");
-            };
-
-            static Exception _exception;
-            static RequestRateLimiterConfiguration _configuration;
+            // Then it should throw ArgumentNullException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentNullException>();
+            exception.Message.Should().Contain("Keys prefix must be provided.");
+            ((ArgumentNullException)exception).ParamName.Should().Be("KeysPrefix");
         }
     }
 }

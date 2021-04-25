@@ -1,42 +1,59 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="HttpContextItemsDictionaryExtensionsTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
     using System.Collections.Generic;
-    using Machine.Specifications;
+    using FluentAssertions;
+    using Xunit;
 
-    class HttpContextItemsDictionaryExtensionsTests
+    public class HttpContextItemsDictionaryExtensionsTests
     {
-        [Subject(typeof(HttpContextItemsDictionaryExtensions), "HttpContext Items Dictionary Extensions"), Tags("Positive Test")]
-        public class When_adding_client_id
+        [Fact(DisplayName = "Adding Client ID")]
+        public void AddingClientId()
         {
-            Because of = () =>
-            {
-                items.AddClientId("client-id");
-            };
+            // Given
+            var items = new Dictionary<object, object>();
 
-            It the_extension_method_should_return_the_expected_client_id = () =>
-            {
-                items.GetClientId().ShouldEqual("client-id");
-            };
+            // When client ID is added
+            items.AddClientId("client-id");
 
-            static IDictionary<object, object> items = new Dictionary<object, object>();
+            // Then it can be retrieved
+            items.GetClientId().Should().Be("client-id");
         }
 
-        [Subject(typeof(HttpContextItemsDictionaryExtensions), "HttpContext Items Dictionary Extensions"), Tags("Negative Test")]
-        public class When_client_id_does_not_exist
+        [Fact(DisplayName = "Client ID Does Not Exist")]
+        public void ClientIdDoesNotExist()
         {
-            Because of = () =>
-            {
-                clientId = items.GetClientId();
-            };
+            // Given
+            var items = new Dictionary<object, object>();
 
-            It the_extension_method_should_return_null = () =>
-            {
-                clientId.ShouldBeNull();
-            };
+            // When client ID is retrieved
+            var clientId = items.GetClientId();
 
-            static string clientId;
-
-            static IDictionary<object, object> items = new Dictionary<object, object>();
+            // Then it should return null
+            clientId.Should().BeNull();
         }
     }
 }

@@ -1,164 +1,149 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ClientResolutionMiddlewareTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using System.Threading.Tasks;
     using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
     using Configuration;
-    using Machine.Specifications;
+    using FluentAssertions;
     using Moq;
-    using It = Machine.Specifications.It;
-    using System.Collections.Generic;
-    using System.Net;
+    using Xunit;
 
-    class ClientResolutionMiddlewareTests
+    public class ClientResolutionMiddlewareTests
     {
-        [Subject(typeof(ClientResolutionMiddleware), "Client Resolution Middleware"), Tags("Positive Test")]
-        public class When_anonymous_clients_are_allowed
+        [Fact(DisplayName = "Allow Anonymous Clients")]
+        public async void AllowAnonymousClients()
         {
-            Establish context = () =>
+            // Given
+            var isNextCalled = false;
+            var context = new DefaultHttpContext();
+            var configuration = new CongestionControlConfiguration();
+            var loggerMock = new Mock<ILogger<ClientResolutionMiddleware>>();
+
+            var clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
+            clientIdentifierProviderMock
+                .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
+                .ReturnsAsync((string)null);
+
+            async Task Next(HttpContext httpContext)
             {
-                _configuration = new CongestionControlConfiguration();
-                _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
-                _loggerMock = new Mock<ILogger<ClientResolutionMiddleware>>();
+                await Task.CompletedTask;
 
-                _clientIdentifierProviderMock
-                    .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
-                    .ReturnsAsync((string)null);
+                isNextCalled = true;
+            }
 
-                async Task Next(HttpContext httpContext)
-                {
-                    await Task.CompletedTask;
+            var middleware = new ClientResolutionMiddleware(Next,
+                configuration,
+                new List<IClientIdentifierProvider> { clientIdentifierProviderMock.Object },
+                loggerMock.Object);
 
-                    _isNextCalled = true;
-                }
+            // When the middleware is invoked
+            await middleware.Invoke(context);
 
-                _middleware = new ClientResolutionMiddleware(Next,
-                    _configuration,
-                    new List<IClientIdentifierProvider> { _clientIdentifierProviderMock.Object },
-                    _loggerMock.Object);
-            };
+            // Then it should execute next delegate in pipeline
+            isNextCalled.Should().BeTrue();
 
-            Because of = () =>
-            {
-                _middleware.Invoke(_context).Await();
-            };
-
-            It should_execute_next_delegate_in_pipeline = () =>
-            {
-                _isNextCalled.ShouldBeTrue();
-            };
-
-            It should_add_client_id_to_http_context_items = () =>
-            {
-                _context.Items.GetClientId().ShouldNotBeNull();
-            };
-
-            static bool _isNextCalled;
-            static DefaultHttpContext _context = new DefaultHttpContext();
-            static CongestionControlConfiguration _configuration;
-            static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
-            static Mock<ILogger<ClientResolutionMiddleware>> _loggerMock;
-            static ClientResolutionMiddleware _middleware;
+            // And it should add client ID to http context items
+            context.Items.GetClientId().Should().NotBeNull();
         }
 
-        [Subject(typeof(ClientResolutionMiddleware), "Client Resolution Middleware"), Tags("Positive Test")]
-        public class When_client_identity_is_resolved
+        [Fact(DisplayName = "Disallow Anonymous Clients")]
+        public async void DisallowAnonymousClients()
         {
-            Establish context = () =>
+            // Given
+            var isNextCalled = false;
+            var context = new DefaultHttpContext();
+            var configuration = new CongestionControlConfiguration { AllowAnonymousClients = false };
+            var loggerMock = new Mock<ILogger<ClientResolutionMiddleware>>();
+
+            var clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
+            clientIdentifierProviderMock
+                .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
+                .ReturnsAsync((string)null);
+
+            async Task Next(HttpContext httpContext)
             {
-                _configuration = new CongestionControlConfiguration();
-                _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
-                _loggerMock = new Mock<ILogger<ClientResolutionMiddleware>>();
+                await Task.CompletedTask;
 
-                _clientIdentifierProviderMock
-                    .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
-                    .ReturnsAsync(_clientId);
+                isNextCalled = true;
+            }
 
-                async Task Next(HttpContext httpContext)
-                {
-                    await Task.CompletedTask;
+            var middleware = new ClientResolutionMiddleware(Next,
+                configuration,
+                new List<IClientIdentifierProvider> { clientIdentifierProviderMock.Object },
+                loggerMock.Object);
 
-                    _isNextCalled = true;
-                }
+            // When the middleware is invoked
+            await middleware.Invoke(context);
 
-                _middleware = new ClientResolutionMiddleware(Next,
-                    _configuration,
-                    new List<IClientIdentifierProvider> { _clientIdentifierProviderMock.Object },
-                    _loggerMock.Object);
-            };
+            // Then it should not execute next delegate in pipeline
+            isNextCalled.Should().BeFalse();
 
-            Because of = () =>
-            {
-                _middleware.Invoke(_context).Await();
-            };
-
-            It should_execute_next_delegate_in_pipeline = () =>
-            {
-                _isNextCalled.ShouldBeTrue();
-            };
-
-            It should_add_client_id_to_http_context_items = () =>
-            {
-                _context.Items.GetClientId().ShouldEqual(_clientId);
-            };
-
-            static string _clientId = Guid.NewGuid().ToString();
-            static bool _isNextCalled;
-            static DefaultHttpContext _context = new DefaultHttpContext();
-            static CongestionControlConfiguration _configuration;
-            static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
-            static Mock<ILogger<ClientResolutionMiddleware>> _loggerMock;
-            static ClientResolutionMiddleware _middleware;
+            // And it should return unauthorized response
+            context.Response.StatusCode.Should().Be((int)HttpStatusCode.Unauthorized);
         }
 
-        [Subject(typeof(ClientResolutionMiddleware), "Client Resolution Middleware"), Tags("Negative Test")]
-        public class When_anonymous_clients_are_not_allowed
+        [Fact(DisplayName = "Client Identity Resolved")]
+        public async void ClientIdentityResolved()
         {
-            Establish context = () =>
+            // Given
+            var clientId = Guid.NewGuid().ToString();
+            var isNextCalled = false;
+            var context = new DefaultHttpContext();
+            var configuration = new CongestionControlConfiguration();
+            var loggerMock = new Mock<ILogger<ClientResolutionMiddleware>>();
+
+            var clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
+            clientIdentifierProviderMock
+                .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
+                .ReturnsAsync(clientId);
+
+            async Task Next(HttpContext httpContext)
             {
-                _configuration = new CongestionControlConfiguration { AllowAnonymousClients = false };
-                _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
-                _loggerMock = new Mock<ILogger<ClientResolutionMiddleware>>();
+                await Task.CompletedTask;
 
-                _clientIdentifierProviderMock
-                    .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
-                    .ReturnsAsync((string)null);
+                isNextCalled = true;
+            }
 
-                async Task Next(HttpContext httpContext)
-                {
-                    await Task.CompletedTask;
+            var middleware = new ClientResolutionMiddleware(Next,
+                configuration,
+                new List<IClientIdentifierProvider> { clientIdentifierProviderMock.Object },
+                loggerMock.Object);
 
-                    _isNextCalled = true;
-                }
+            // When the middleware is invoked
+            await middleware.Invoke(context);
 
-                _middleware = new ClientResolutionMiddleware(Next,
-                    _configuration,
-                    new List<IClientIdentifierProvider> { _clientIdentifierProviderMock.Object },
-                    _loggerMock.Object);
-            };
+            // Then it should execute next delegate in pipeline
+            isNextCalled.Should().BeTrue();
 
-            Because of = () =>
-            {
-                _middleware.Invoke(_context).Await();
-            };
-
-            It should_not_execute_next_delegate_in_pipeline = () =>
-            {
-                _isNextCalled.ShouldBeFalse();
-            };
-
-            It should_return_unauthorized_response = () =>
-            {
-                _context.Response.StatusCode.ShouldEqual((int)HttpStatusCode.Unauthorized);
-            };
-
-            static bool _isNextCalled;
-            static DefaultHttpContext _context = new DefaultHttpContext();
-            static CongestionControlConfiguration _configuration;
-            static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
-            static Mock<ILogger<ClientResolutionMiddleware>> _loggerMock;
-            static ClientResolutionMiddleware _middleware;
+            // And it should add client ID to http context items
+            context.Items.GetClientId().Should().Be(clientId);
         }
     }
 }

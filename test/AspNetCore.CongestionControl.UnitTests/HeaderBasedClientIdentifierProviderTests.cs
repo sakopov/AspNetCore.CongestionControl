@@ -1,98 +1,100 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="HeaderBasedClientIdentifierProviderTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
     using System;
     using Microsoft.AspNetCore.Http;
-    using Machine.Specifications;
+    using FluentAssertions;
+    using Xunit;
 
-    class HeaderBasedClientIdentifierProviderTests
+    public class HeaderBasedClientIdentifierProviderTests
     {
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Positive Test")]
-        public class When_client_set_client_identifier_in_headers
+        [Fact(DisplayName = "Client Identifier Set Using Default Header")]
+        public async void ClientIdentifierSetUsingDefaultHeader()
         {
-            Establish context = () =>
-            {
-                _context.Request.Headers.Add(HeaderName, ClientId);
-            };
-
-            Because of = () =>
-            {
-                _result = _provider.ExecuteAsync(_context).Await();
-            };
-
-            It should_return_the_expected_client_identifier = () =>
-            {
-                _result.ShouldEqual(ClientId);
-            };
-
+            // Given
             const string HeaderName = "x-api-key";
             const string ClientId = "tester";
 
-            static string _result;
-            static DefaultHttpContext _context = new DefaultHttpContext();
-            static HeaderBasedClientIdentifierProvider _provider = new HeaderBasedClientIdentifierProvider();
+            var provider = new HeaderBasedClientIdentifierProvider();
+            var context = new DefaultHttpContext();
+
+            context.Request.Headers.Add(HeaderName, ClientId);
+
+            // When header-based client identifier provider is executed
+            var result = await provider.ExecuteAsync(context);
+
+            // Then it should return the expected client identifier
+            result.Should().Be(ClientId);
         }
 
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Positive Test")]
-        public class When_client_is_using_custom_header_name
+        [Fact(DisplayName = "Client Identifier Set Using Custom Header")]
+        public async void ClientIdentifierSetUsingCustomHeader()
         {
-            Establish context = () =>
-            {
-                _context.Request.Headers.Add(HeaderName, ClientId);
-                _provider = new HeaderBasedClientIdentifierProvider(HeaderName);
-            };
-
-            Because of = () =>
-            {
-                _result = _provider.ExecuteAsync(_context).Await();
-            };
-
-            It should_return_the_expected_client_identifier = () =>
-            {
-                _result.ShouldEqual(ClientId);
-            };
-
+            // Given
             const string HeaderName = "my-custom-header";
             const string ClientId = "tester";
 
-            static string _result;
-            static DefaultHttpContext _context = new DefaultHttpContext();
-            static HeaderBasedClientIdentifierProvider _provider;
+            var provider = new HeaderBasedClientIdentifierProvider(HeaderName);
+            var context = new DefaultHttpContext();
+
+            context.Request.Headers.Add(HeaderName, ClientId);
+
+            // When header-based client identifier provider is executed
+            var result = await provider.ExecuteAsync(context);
+
+            // Then it should return the expected client identifier
+            result.Should().Be(ClientId);
         }
 
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Positive Test")]
-        public class When_client_does_not_set_client_identifier_in_headers
+        [Fact(DisplayName = "No Client Identifier in Headers")]
+        public async void NoClientIdentifierInHeaders()
         {
-            Because of = () =>
-            {
-                _result = _provider.ExecuteAsync(_context).Await();
-            };
+            // Given
+            var context = new DefaultHttpContext();
+            var provider = new HeaderBasedClientIdentifierProvider();
 
-            It should_return_null_client_identifer = () =>
-            {
-                _result.ShouldBeNull();
-            };
+            // When header-based client identifier provider is executed
+            var result = await provider.ExecuteAsync(context);
 
-            static string _result;
-            static DefaultHttpContext _context = new DefaultHttpContext();
-            static HeaderBasedClientIdentifierProvider _provider = new HeaderBasedClientIdentifierProvider();
+            // Then it should return null identifier
+            result.Should().BeNull();
         }
 
-        [Subject(typeof(HeaderBasedClientIdentifierProvider), "Header-Based Client Identifier Provider"), Tags("Negative Test")]
-        public class When_header_name_is_not_provided
+        [Fact(DisplayName = "Header Name Not Provided")]
+        public void HeaderNameNotProvided()
         {
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => new HeaderBasedClientIdentifierProvider(null));
-            };
+            // Given
+            var context = new DefaultHttpContext();
 
-            It should_throw_argument_null_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentNullException>();
-            };
+            // When header-based client identifier provider is executed
+            var exception = Record.Exception(() => new HeaderBasedClientIdentifierProvider(null));
 
-            static Exception _exception;
-            static DefaultHttpContext _context = new DefaultHttpContext();
+            // It should throw ArgumentNullException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentNullException>();
         }
     }
 }
