@@ -1,6 +1,6 @@
 # Congestion Control for AspNet Core
 
-[![Build status](https://ci.appveyor.com/api/projects/status/10hsvd062bymvl0y?svg=true)](https://ci.appveyor.com/project/sakopov/aspnetcore-congestioncontrol)
+[![Build Status](https://github.com/sakopov/AspNetCore.CongestionControl/workflows/build/badge.svg)](https://github.com/sakopov/AspNetCore.CongestionControl)
 [![NuGet Pre Release](https://img.shields.io/nuget/vpre/AspNetCore.CongestionControl.svg)](https://www.nuget.org/packages/AspNetCore.CongestionControl)
 
 *Congestion control middleware components for ASPNET Core.*
