@@ -45,7 +45,8 @@ jobs:
       run: dotnet build -c Release --no-restore
 
     - name: Unit Test
-      run: dotnet test $UNIT_TEST_PROJECT_PATH -c Release --no-build /p:CollectCoverage=true /p:CoverletOutput=./bin/Release/coverage/ /p:CoverletOutputFormat=lcov
+      run: |
+        dotnet test $UNIT_TEST_PROJECT_PATH -c Release --no-build /p:CollectCoverage=true /p:CoverletOutput=$UNIT_TEST_PROJECT_PATH/bin/Release/coverage/ /p:CoverletOutputFormat=lcov
 
     - name: Publish Coverage Report to coveralls.io
       uses: coverallsapp/github-action@master
