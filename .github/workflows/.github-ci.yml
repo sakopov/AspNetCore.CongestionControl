@@ -62,7 +62,7 @@ jobs:
     - name: Package
       if: github.event_name == 'release'
       run: |
-        PACKAGE_VERSION = "${{ steps.version.outputs.previous_tag//v }}"
+        PACKAGE_VERSION = "${ steps.version.outputs.previous_tag//v }"
         dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=$PACKAGE_VERSION $PROJECT_PATH
 
     - name: Upload Artifact
