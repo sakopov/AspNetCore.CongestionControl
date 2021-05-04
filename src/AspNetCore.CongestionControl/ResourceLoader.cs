@@ -56,11 +56,6 @@ namespace AspNetCore.CongestionControl
 
             using (var stream = assembly.GetManifestResourceStream(resource))
             {
-                if (stream == null)
-                {
-                    return null;
-                }
-
                 using (var streamReader = new StreamReader(stream))
                 {
                     return await streamReader.ReadToEndAsync();

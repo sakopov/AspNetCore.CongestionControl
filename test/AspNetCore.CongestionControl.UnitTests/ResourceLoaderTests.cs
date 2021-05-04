@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ScriptLoaderTests.cs">
+// <copyright file="ResourceLoaderTests.cs">
 //   Copyright (c) 2018-2021 Sergey Akopov
 //
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,7 +28,7 @@ namespace AspNetCore.CongestionControl.UnitTests
     using FluentAssertions;
     using Xunit;
 
-    public class ScriptLoaderTests
+    public class ResourceLoaderTests
     {
         [Fact(DisplayName = "Loading Script From Assembly")]
         public async void LoadingScriptFromAssembly()

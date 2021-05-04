@@ -47,6 +47,17 @@ namespace AspNetCore.CongestionControl.UnitTests
             ((ArgumentNullException) exception).ParamName.Should().Be("services");
         }
 
+        [Fact(DisplayName = "Service Collection Argument Is Null When Adding Default Components")]
+        public void ServiceCollectionArgumentIsNullWhenAddingDefaultComponents()
+        {
+            // When default congestion control components are added without service collection argument
+            var exception = Record.Exception(() => ServiceCollectionExtensions.AddCongestionControl(null));
+
+            // Then it should throw ArgumentNullException
+            exception.Should().BeOfType<ArgumentNullException>();
+            ((ArgumentNullException) exception).ParamName.Should().Be("services");
+        }
+
         [Fact(DisplayName = "Configure Argument Is Null")]
         public void ConfigureArgumentIsNull()
         {
@@ -155,14 +166,31 @@ namespace AspNetCore.CongestionControl.UnitTests
         {
             // Given
             var services = new ServiceCollection();
-            CongestionControlConfiguration configuration = null;
 
             // When request rate limiter is added explicitly
             services.AddCongestionControl(options =>
             {
                 options.AddRequestRateLimiter();
-                configuration = options;
             });
+
+            // Then it should add request rate limiter configuration to the service collection
+            services.Any(service => service.ServiceType == typeof(RequestRateLimiterConfiguration))
+                .Should().BeTrue();
+
+            // And it should add in-memory token bucket consumer to the service collection
+            services.Any(service =>
+                service.ServiceType == typeof(ITokenBucketConsumer) &&
+                service.ImplementationType == typeof(InMemoryTokenBucketConsumer)).Should().BeTrue();
+        }
+
+        [Fact(DisplayName = "Request Rate Limiter Is Configured by Default")]
+        public void RequestRateLimiterIsConfiguredByDefault()
+        {
+            // Given
+            var services = new ServiceCollection();
+
+            // When request rate limiter is added by default
+            services.AddCongestionControl();
 
             // Then it should add request rate limiter configuration to the service collection
             services.Any(service => service.ServiceType == typeof(RequestRateLimiterConfiguration))
