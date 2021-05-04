@@ -61,7 +61,7 @@ jobs:
 
     - name: Package
       if: github.event_name == 'release'
-      run: dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_version }} $PROJECT_PATH
+      run: dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.previous_tag//v }} $PROJECT_PATH
 
     - name: Upload Artifact
       if: github.event_name == 'release'
