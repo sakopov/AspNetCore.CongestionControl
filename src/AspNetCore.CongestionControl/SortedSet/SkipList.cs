@@ -1,17 +1,17 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SkipList.cs">
-//   Copyright (c) 2018 Sergey Akopov
-//   
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
 //   of this software and associated documentation files (the "Software"), to deal
 //   in the Software without restriction, including without limitation the rights
 //   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //   copies of the Software, and to permit persons to whom the Software is
 //   furnished to do so, subject to the following conditions:
-//   
+//
 //   The above copyright notice and this permission notice shall be included in
 //   all copies or substantial portions of the Software.
-//   
+//
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -272,8 +272,8 @@ namespace AspNetCore.CongestionControl.SortedSet
             // Jump to element
             currentNode = currentNode.Levels[0].Forward;
 
-            Debug.Assert(currentNode != null && 
-                         currentScore.NearlyEquals(currentNode.Score) && 
+            Debug.Assert(currentNode != null &&
+                         currentScore.NearlyEquals(currentNode.Score) &&
                          string.CompareOrdinal(currentNode.Element, element) == 0);
 
             // If the node, after the score update, would be still exactly
@@ -334,7 +334,7 @@ namespace AspNetCore.CongestionControl.SortedSet
 
             for (var currentLevel = Levels - 1; currentLevel >= 0; currentLevel--)
             {
-                while (currentNode.Levels[currentLevel].Forward != null && 
+                while (currentNode.Levels[currentLevel].Forward != null &&
                        (range.IsMinExclusive
                            ? currentNode.Levels[currentLevel].Forward.Score <= range.Min
                            : currentNode.Levels[currentLevel].Forward.Score < range.Min))
@@ -350,8 +350,8 @@ namespace AspNetCore.CongestionControl.SortedSet
 
             /* Delete nodes while in range. */
             while (currentNode != null &&
-                   (range.IsMaxExclusive 
-                       ? currentNode.Score < range.Max 
+                   (range.IsMaxExclusive
+                       ? currentNode.Score < range.Max
                        : currentNode.Score <= range.Max))
             {
                 var next = currentNode.Levels[0].Forward;
@@ -381,7 +381,7 @@ namespace AspNetCore.CongestionControl.SortedSet
         {
             for (var currentLevel = 0; currentLevel < Levels; currentLevel++)
             {
-                if (update[currentLevel].Levels[currentLevel].Forward == node) 
+                if (update[currentLevel].Levels[currentLevel].Forward == node)
                 {
                     if (node.Levels[currentLevel].Forward != null)
                     {

@@ -1,17 +1,17 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="RequestRateLimiterMiddleware.cs">
-//   Copyright (c) 2018 Sergey Akopov
-//   
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
 //   of this software and associated documentation files (the "Software"), to deal
 //   in the Software without restriction, including without limitation the rights
 //   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //   copies of the Software, and to permit persons to whom the Software is
 //   furnished to do so, subject to the following conditions:
-//   
+//
 //   The above copyright notice and this permission notice shall be included in
 //   all copies or substantial portions of the Software.
-//   
+//
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,10 +24,11 @@
 
 namespace AspNetCore.CongestionControl
 {
-    using Configuration;
-    using Microsoft.AspNetCore.Http;
     using System.Net;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Logging;
+    using Configuration;
 
     /// <summary>
     /// The middleware responsible for enforcing rate limiting of client
@@ -46,11 +47,6 @@ namespace AspNetCore.CongestionControl
         private readonly CongestionControlConfiguration _configuration;
 
         /// <summary>
-        /// The client identifier provider.
-        /// </summary>
-        private readonly IClientIdentifierProvider _clientIdentifierProvider;
-
-        /// <summary>
         /// The token bucket consumer.
         /// </summary>
         private readonly ITokenBucketConsumer _tokenBucketConsumer;
@@ -59,6 +55,11 @@ namespace AspNetCore.CongestionControl
         /// The HTTP response formatter.
         /// </summary>
         private readonly IHttpResponseFormatter _httpResponseFormatter;
+
+        /// <summary>
+        /// The logger.
+        /// </summary>
+        private readonly ILogger _logger;
 
         /// <summary>
         /// The number of tokens to consume per request.
@@ -79,27 +80,27 @@ namespace AspNetCore.CongestionControl
         /// <param name="configuration">
         /// The congestion control configuration.
         /// </param>
-        /// <param name="clientIdentifierProvider">
-        /// The client identifier provider.
-        /// </param>
         /// <param name="tokenBucketConsumer">
         /// The token bucket consumer.
         /// </param>
         /// <param name="httpResponseFormatter">
         /// The rate limit response formatter.
         /// </param>
+        /// <param name="logger">
+        /// The logger.
+        /// </param>
         public RequestRateLimiterMiddleware(
             RequestDelegate next,
             CongestionControlConfiguration configuration,
-            IClientIdentifierProvider clientIdentifierProvider,
             ITokenBucketConsumer tokenBucketConsumer,
-            IHttpResponseFormatter httpResponseFormatter)
+            IHttpResponseFormatter httpResponseFormatter,
+            ILogger<RequestRateLimiterMiddleware> logger)
         {
             _next = next;
             _configuration = configuration;
-            _clientIdentifierProvider = clientIdentifierProvider;
             _tokenBucketConsumer = tokenBucketConsumer;
             _httpResponseFormatter = httpResponseFormatter;
+            _logger = logger;
         }
 
         /// <summary>
@@ -114,12 +115,14 @@ namespace AspNetCore.CongestionControl
         /// </returns>
         public async Task Invoke(HttpContext httpContext)
         {
-            var clientId = await _clientIdentifierProvider.ExecuteAsync(httpContext);
+            var clientId = httpContext.Items.GetClientId();
 
             var response = await _tokenBucketConsumer.ConsumeAsync(clientId, RequestedTokens);
 
             if (!response.IsAllowed)
             {
+                _logger.LogInformation("Request is not allowed by Congestion Control Token Bucket.");
+
                 await _httpResponseFormatter.FormatAsync(httpContext, new RateLimitContext(
                     remaining: response.Remaining,
                     limit: response.Limit,

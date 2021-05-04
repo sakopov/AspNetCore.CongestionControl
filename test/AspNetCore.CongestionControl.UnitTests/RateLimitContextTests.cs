@@ -1,27 +1,46 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="RateLimitContextTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Machine.Specifications;
     using System.Net;
+    using FluentAssertions;
+    using Xunit;
 
-    class RateLimitContextTests
+    public class RateLimitContextTests
     {
-        [Subject(typeof(RateLimitContext), "Rate Limit Context"), Tags("Positive Test")]
-        public class When_creating_new_rate_limit_context
+        [Fact(DisplayName = "Happy Path")]
+        public void HappyPath()
         {
-            Because of = () =>
-            {
-                _context = new RateLimitContext(1, 10, HttpStatusCode.ServiceUnavailable, "source");
-            };
+            // When a rate limit context instance is created
+            var context = new RateLimitContext(1, 10, HttpStatusCode.ServiceUnavailable, "source");
 
-            It should_create_the_expected_rate_limit_context = () =>
-            {
-                _context.Remaining.ShouldEqual(1);
-                _context.Limit.ShouldEqual(10);
-                _context.HttpStatusCode.ShouldEqual(HttpStatusCode.ServiceUnavailable);
-                _context.Source.ShouldEqual("source");
-            };
-
-            static RateLimitContext _context;
+            // Then it should create the expected rate limit context
+            context.Remaining.Should().Be(1);
+            context.Limit.Should().Be(10);
+            context.HttpStatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+            context.Source.Should().Be("source");
         }
     }
 }

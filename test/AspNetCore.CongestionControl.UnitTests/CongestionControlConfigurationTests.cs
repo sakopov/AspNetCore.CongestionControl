@@ -1,168 +1,197 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="CongestionControlConfigurationTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Configuration;
-    using Machine.Specifications;
-    using Moq;
     using System;
-    using It = Machine.Specifications.It;
+    using System.Linq;
+    using Configuration;
+    using FluentAssertions;
+    using Moq;
+    using Xunit;
 
-    class CongestionControlConfigurationTests
+    public class CongestionControlConfigurationTests
     {
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_request_rate_limiter_with_default_options
+        [Fact(DisplayName = "Adding Request Rate Limiter with Default Options")]
+        public void AddingRequestRateLimiterWithDefaultOptions()
         {
-            Because of = () =>
-            {
-                _configuration.AddRequestRateLimiter();
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_set_the_configuration_internally = () =>
-            {
-                _configuration.RequestRateLimiterConfiguration.ShouldNotBeNull();
-            };
+            // When request rate limiter is added
+            configuration.AddRequestRateLimiter();
 
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then the request rate limiter instance should be set internally
+            configuration.RequestRateLimiterConfiguration.Should().NotBeNull();
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_request_rate_limiter_with_custom_options
+        [Fact(DisplayName = "Adding Request Rate Limiter with Custom Options")]
+        public void AddingRequestRateLimiterWithCustomOptions()
         {
-            Because of = () =>
-            {
-                _configuration.AddRequestRateLimiter(config =>
-                {
-                    config.AverageRate = 1;
-                    config.Interval = 10;
-                    config.Bursting = 2;
-                });
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_set_the_configuration_internally = () =>
+            // When request rate limiter is added with custom options
+            configuration.AddRequestRateLimiter(config =>
             {
-                _configuration.RequestRateLimiterConfiguration.ShouldNotBeNull();
-            };
+                config.AverageRate = 1;
+                config.Interval = 10;
+                config.Bursting = 2;
+            });
 
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then the request rate limiter instance should be set internally
+            configuration.RequestRateLimiterConfiguration.Should().NotBeNull();
+            configuration.RequestRateLimiterConfiguration.AverageRate.Should().Be(1);
+            configuration.RequestRateLimiterConfiguration.Interval.Should().Be(10);
+            configuration.RequestRateLimiterConfiguration.Bursting.Should().Be(2);
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_concurrent_request_limiter_with_default_options
+        [Fact(DisplayName = "Adding Concurrent Request Limiter with Default Options")]
+        public void AddingConcurrentRequestLimiterWithDefaultOptions()
         {
-            Because of = () =>
-            {
-                _configuration.AddConcurrentRequestLimiter();
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_set_the_configuration_internally = () =>
-            {
-                _configuration.ConcurrentRequestLimiterConfiguration.ShouldNotBeNull();
-            };
+            // When the concurrent request limiter is added
+            configuration.AddConcurrentRequestLimiter();
 
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then the concurrent request limiter instance should be set internally
+            configuration.ConcurrentRequestLimiterConfiguration.Should().NotBeNull();
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_concurrent_request_limiter_with_custom_options
+        [Fact(DisplayName = "Adding Concurrent Request Limiter with Custom Options")]
+        public void AddingConcurrentRequestLimiterWithCustomOptions()
         {
-            Because of = () =>
-            {
-                _configuration.AddConcurrentRequestLimiter(config =>
-                {
-                    config.Capacity = 10;
-                    config.RequestTimeToLive = 60;
-                });
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_set_the_configuration_internally = () =>
+            // When the concurrent request limiter is added
+            configuration.AddConcurrentRequestLimiter(config =>
             {
-                _configuration.ConcurrentRequestLimiterConfiguration.ShouldNotBeNull();
-            };
+                config.Capacity = 10;
+                config.RequestTimeToLive = 60;
+            });
 
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then the concurrent request limiter instance should be set internally
+            configuration.ConcurrentRequestLimiterConfiguration.Should().NotBeNull();
+            configuration.ConcurrentRequestLimiterConfiguration.Capacity.Should().Be(10);
+            configuration.ConcurrentRequestLimiterConfiguration.RequestTimeToLive.Should().Be(60);
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_redis_storage
+        [Fact(DisplayName = "Adding Redis Storage")]
+        public void AddingRedisStorage()
         {
-            Because of = () =>
-            {
-                _configuration.AddRedisStorage("127.0.0.1:6379");
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_set_the_configuration_internally = () =>
-            {
-                _configuration.RedisConfiguration.ShouldNotBeNull();
-            };
+            // When Redis storage is added
+            configuration.AddRedisStorage("127.0.0.1:6379");
 
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then redis storage configuration should be set internally
+            configuration.RedisConfiguration.Should().NotBeNull();
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_custom_client_identifier_provider
+        [Fact(DisplayName = "Adding Header-Based Client Identifier Provider")]
+        public void AddingHeaderBasedClientIdentifierProvider()
         {
-            Because of = () =>
-            {
-                _configuration.AddClientIdentifierProvider(new Mock<IClientIdentifierProvider>().Object);
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_set_the_configuration_internally = () =>
-            {
-                _configuration.ClientIdentifierProvider.ShouldNotBeNull();
-            };
+            // When header-based client identifier provider is added
+            configuration.AddHeaderBasedClientIdentifierProvider();
 
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then header-based client identifier provider should be set internally
+            configuration.ClientIdentifierProviders.Should().NotBeEmpty();
+            configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(HeaderBasedClientIdentifierProvider)).Should().BeTrue();
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Negative Test")]
-        public class When_adding_custom_client_identifier_provider_and_passing_null
+        [Fact(DisplayName = "Adding Query-Based Client Identifier Provider")]
+        public void AddingQueryBasedClientIdentifierProvider()
         {
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.AddClientIdentifierProvider(null));
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_throw_argument_null_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentNullException>();
-            };
+            // When query-based client identifier provider is added
+            configuration.AddQueryBasedClientIdentifierProvider();
 
-            static Exception _exception;
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then query-based client identifier provider should be set internally
+            configuration.ClientIdentifierProviders.Should().NotBeEmpty();
+            configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(QueryBasedClientIdentifierProvider)).Should().BeTrue();
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Positive Test")]
-        public class When_adding_custom_http_response_formatter
+        [Fact(DisplayName = "Adding Custom Client Identifier Provider")]
+        public void AddingCustomClientIdentifierProvider()
         {
-            Because of = () =>
-            {
-                _configuration.AddHttpResponseFormatter(new Mock<IHttpResponseFormatter>().Object);
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_set_the_configuration_internally = () =>
-            {
-                _configuration.HttpResponseFormatter.ShouldNotBeNull();
-            };
+            // When custom client identifier provider is added
+            configuration.AddClientIdentifierProvider(new Mock<IClientIdentifierProvider>().Object);
 
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then custom client identifier provider should be set internally
+            configuration.ClientIdentifierProviders.Should().NotBeEmpty();
         }
 
-        [Subject(typeof(CongestionControlConfiguration), "Congestion Control Configuration"), Tags("Negative Test")]
-        public class When_adding_custom_http_response_formatter_and_passing_null
+        [Fact(DisplayName = "Adding Null Client Identifier Provider")]
+        public void AddingNullClientIdentifierProvider()
         {
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => _configuration.AddHttpResponseFormatter(null));
-            };
+            // Given
+            var configuration = new CongestionControlConfiguration();
 
-            It should_throw_argument_null_exception = () =>
-            {
-                _exception.ShouldNotBeNull();
-                _exception.ShouldBeOfExactType<ArgumentNullException>();
-            };
+            // When adding null client identifier provider
+            var exception = Record.Exception(() => configuration.AddClientIdentifierProvider(null));
 
-            static Exception _exception;
-            static CongestionControlConfiguration _configuration = new CongestionControlConfiguration();
+            // Then it should throw ArgumentNullException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentNullException>();
+        }
+
+        [Fact(DisplayName = "Adding Custom HTTP Response Formatter")]
+        public void AddingCustomHttpResponseFormatter()
+        {
+            // Given
+            var configuration = new CongestionControlConfiguration();
+
+            // When adding custom HTTP response formatter
+            configuration.AddHttpResponseFormatter(new Mock<IHttpResponseFormatter>().Object);
+
+            // Then it should set custom HTTP response formatter internally
+            configuration.HttpResponseFormatter.Should().NotBeNull();
+        }
+
+        [Fact(DisplayName = "Adding Null HTTP Response Formatter")]
+        public void AddingNullHttpResponseFormatter()
+        {
+            // Given
+            var configuration = new CongestionControlConfiguration();
+
+            // When adding null HTTP response formatter
+            var exception = Record.Exception(() => configuration.AddHttpResponseFormatter(null));
+
+            // Then it should throw ArgumentNullException
+            exception.Should().NotBeNull();
+            exception.Should().BeOfType<ArgumentNullException>();
         }
     }
 }

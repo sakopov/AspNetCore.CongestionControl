@@ -1,138 +1,126 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ConcurrentRequestLimiterMiddlewareTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Configuration;
-    using Machine.Specifications;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.Logging;
-    using Moq;
     using System;
     using System.Threading.Tasks;
-    using It = Machine.Specifications.It;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.Logging;
+    using Configuration;
+    using FluentAssertions;
+    using Moq;
+    using Xunit;
 
-    class ConcurrentRequestLimiterMiddlewareTests
+    public class ConcurrentRequestLimiterMiddlewareTests
     {
-        [Subject(typeof(ConcurrentRequestLimiterMiddleware), "Concurrent Request Limiter Middleware"), Tags("Positive Test")]
-        public class When_request_is_allowed
+        [Fact(DisplayName = "Request is Allowed")]
+        public async void RequestIsAllowed()
         {
-            Establish context = () =>
+            // Given
+            var isNextCalled = false;
+            var context = new DefaultHttpContext();
+            var configuration = new CongestionControlConfiguration();
+            var loggerMock = new Mock<ILogger<ConcurrentRequestLimiterMiddleware>>();
+
+            var concurrentRequestTrackerMock = new Mock<IConcurrentRequestsManager>();
+            concurrentRequestTrackerMock
+                .Setup(mock => mock.AddAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<string>(), Moq.It.IsAny<long>()))
+                .ReturnsAsync(new AddConcurrentRequestResult(true, 1, 1));
+
+            async Task Next(HttpContext httpContext)
             {
-                _configuration = new CongestionControlConfiguration();
-                _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
-                _concurrentRequestTrackerMock = new Mock<IConcurrentRequestsManager>();
-                _loggerMock = new Mock<ILogger<ConcurrentRequestLimiterMiddleware>>();
+                await Task.CompletedTask;
 
-                _clientIdentifierProviderMock
-                    .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
-                    .ReturnsAsync(Guid.NewGuid().ToString);
+                isNextCalled = true;
+            }
 
-                _concurrentRequestTrackerMock
-                    .Setup(mock => mock.AddAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<string>(), Moq.It.IsAny<long>()))
-                    .ReturnsAsync(new AddConcurrentRequestResult(true, 1, 1));
+            context.Items.AddClientId(Guid.NewGuid().ToString());
 
-                async Task Next(HttpContext httpContext)
-                {
-                    await Task.CompletedTask;
+            var middleware = new ConcurrentRequestLimiterMiddleware(Next,
+                configuration,
+                concurrentRequestTrackerMock.Object,
+                new DefaultHttpResponseFormatter(),
+                loggerMock.Object);
 
-                    _isNextCalled = true;
-                }
+            // When the middleware is invoked
+            await middleware.Invoke(context);
 
-                _middleware = new ConcurrentRequestLimiterMiddleware(Next, 
-                    _configuration,
-                    _clientIdentifierProviderMock.Object,
-                    _concurrentRequestTrackerMock.Object,
-                    new DefaultHttpResponseFormatter());
-            };
+            // Then should execute next delegate in pipeline
+            isNextCalled.Should().BeTrue();
 
-            Because of = () =>
-            {
-                _middleware.Invoke(new DefaultHttpContext()).Await();
-            };
-
-            It should_execute_next_delegate_in_pipeline = () =>
-            {
-                _isNextCalled.ShouldBeTrue();
-            };
-
-            It should_remove_request_from_request_tracker = () =>
-            {
-                _concurrentRequestTrackerMock.Verify(mock => mock.RemoveAsync(
-                    Moq.It.IsAny<string>(),
-                    Moq.It.IsAny<string>()), Times.Once);
-            };
-
-            static bool _isNextCalled;
-            static CongestionControlConfiguration _configuration;
-            static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
-            static Mock<IConcurrentRequestsManager> _concurrentRequestTrackerMock;
-            static Mock<ILogger<ConcurrentRequestLimiterMiddleware>> _loggerMock;
-            static ConcurrentRequestLimiterMiddleware _middleware;
+            // And it should remove request from request tracker
+            concurrentRequestTrackerMock.Verify(mock => mock.RemoveAsync(
+                Moq.It.IsAny<string>(),
+                Moq.It.IsAny<string>()), Times.Once);
         }
 
-        [Subject(typeof(ConcurrentRequestLimiterMiddleware), "Concurrent Request Limiter Middleware"), Tags("Negative Test")]
-        public class When_request_is_not_allowed
+        [Fact(DisplayName = "Request is Not Allowed")]
+        public async void RequestIsNotAllowed()
         {
-            Establish context = () =>
+            // Given
+            var isNextCalled = false;
+            var context = new DefaultHttpContext();
+            var configuration = new CongestionControlConfiguration();
+            var httpResponseFormatterMock = new Mock<IHttpResponseFormatter>();
+            var loggerMock = new Mock<ILogger<ConcurrentRequestLimiterMiddleware>>();
+
+            var concurrentRequestTrackerMock = new Mock<IConcurrentRequestsManager>();
+            concurrentRequestTrackerMock
+                .Setup(mock => mock.AddAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<string>(), Moq.It.IsAny<long>()))
+                .ReturnsAsync(new AddConcurrentRequestResult(false, 1, 1));
+
+            async Task Next(HttpContext httpContext)
             {
-                _configuration = new CongestionControlConfiguration();
-                _clientIdentifierProviderMock = new Mock<IClientIdentifierProvider>();
-                _concurrentRequestTrackerMock = new Mock<IConcurrentRequestsManager>();
-                _httpResponseFormatterMock = new Mock<IHttpResponseFormatter>();
-                _loggerMock = new Mock<ILogger<ConcurrentRequestLimiterMiddleware>>();
+                await Task.CompletedTask;
 
-                _clientIdentifierProviderMock
-                    .Setup(mock => mock.ExecuteAsync(Moq.It.IsAny<HttpContext>()))
-                    .ReturnsAsync(Guid.NewGuid().ToString);
+                isNextCalled = true;
+            }
 
-                _concurrentRequestTrackerMock
-                    .Setup(mock => mock.AddAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<string>(), Moq.It.IsAny<long>()))
-                    .ReturnsAsync(new AddConcurrentRequestResult(false, 1, 1));
+            var middleware = new ConcurrentRequestLimiterMiddleware(Next,
+                configuration,
+                concurrentRequestTrackerMock.Object,
+                httpResponseFormatterMock.Object,
+                loggerMock.Object);
 
-                async Task Next(HttpContext httpContext)
-                {
-                    await Task.CompletedTask;
+            context.Items.AddClientId(Guid.NewGuid().ToString());
 
-                    _isNextCalled = true;
-                }
+            // When the middleware is invoked
+            await middleware.Invoke(context);
 
-                _middleware = new ConcurrentRequestLimiterMiddleware(Next,
-                    _configuration,
-                    _clientIdentifierProviderMock.Object,
-                    _concurrentRequestTrackerMock.Object,
-                    _httpResponseFormatterMock.Object);
-            };
+            // Then it should execute http response formatter
+            httpResponseFormatterMock.Verify(mock => mock.FormatAsync(
+                Moq.It.IsAny<HttpContext>(),
+                Moq.It.IsAny<RateLimitContext>()), Times.Once);
 
-            Because of = () =>
-            {
-                _middleware.Invoke(_context).Await();
-            };
+            // And it should not execute next delegate in pipeline
+            isNextCalled.Should().BeFalse();
 
-            It should_execute_http_response_formatter = () =>
-            {
-                _httpResponseFormatterMock.Verify(mock => mock.FormatAsync(
-                    Moq.It.IsAny<HttpContext>(), 
-                    Moq.It.IsAny<RateLimitContext>()), Times.Once);
-            };
-
-            It should_not_execute_next_delegate_in_pipeline = () =>
-            {
-                _isNextCalled.ShouldBeFalse();
-            };
-
-            It should_not_call_remove_on_request_tracker = () =>
-            {
-                _concurrentRequestTrackerMock.Verify(mock => mock.RemoveAsync(
-                    Moq.It.IsAny<string>(),
-                    Moq.It.IsAny<string>()), Times.Never);
-            };
-
-            static bool _isNextCalled;
-            static HttpContext _context = new DefaultHttpContext();
-            static CongestionControlConfiguration _configuration;
-            static Mock<IClientIdentifierProvider> _clientIdentifierProviderMock;
-            static Mock<IConcurrentRequestsManager> _concurrentRequestTrackerMock;
-            static Mock<IHttpResponseFormatter> _httpResponseFormatterMock;
-            static Mock<ILogger<ConcurrentRequestLimiterMiddleware>> _loggerMock;
-            static ConcurrentRequestLimiterMiddleware _middleware;
+            // And it should not call remove on request tracker
+            concurrentRequestTrackerMock.Verify(mock => mock.RemoveAsync(
+                Moq.It.IsAny<string>(),
+                Moq.It.IsAny<string>()), Times.Never);
         }
     }
 }

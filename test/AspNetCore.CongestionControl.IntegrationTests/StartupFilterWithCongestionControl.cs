@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SkipListNodeLevel.cs">
+// <copyright file="StartupFilterWithCongestionControl.cs">
 //   Copyright (c) 2018-2021 Sergey Akopov
 //
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,21 +22,22 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace AspNetCore.CongestionControl.SortedSet
+namespace AspNetCore.CongestionControl.IntegrationTests
 {
-    /// <summary>
-    /// The skip list node level.
-    /// </summary>
-    public class SkipListNodeLevel
-    {
-        /// <summary>
-        /// Gets or sets the forward node.
-        /// </summary>
-        public SkipListNode Forward { get; set; }
+    using System;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
 
-        /// <summary>
-        /// Gets or sets the number of nodes spanned at current level.
-        /// </summary>
-        public long Span { get; set; }
+    class StartupFilterWithCongestionControl : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+        {
+            return app =>
+            {
+                app.UseCongestionControl();
+
+                next(app);
+            };
+        }
     }
 }

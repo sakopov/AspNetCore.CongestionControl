@@ -1,17 +1,17 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ServiceCollectionExtensions.cs">
-//   Copyright (c) 2018 Sergey Akopov
-//   
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
 //   of this software and associated documentation files (the "Software"), to deal
 //   in the Software without restriction, including without limitation the rights
 //   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //   copies of the Software, and to permit persons to whom the Software is
 //   furnished to do so, subject to the following conditions:
-//   
+//
 //   The above copyright notice and this permission notice shall be included in
 //   all copies or substantial portions of the Software.
-//   
+//
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -30,6 +30,8 @@ namespace AspNetCore.CongestionControl
     using Microsoft.Extensions.DependencyInjection;
     using StackExchange.Redis;
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// The extension methods for <see cref="IServiceCollection"/> interface.
@@ -37,10 +39,34 @@ namespace AspNetCore.CongestionControl
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds congestion control components to <see cref="IServiceCollection"/>.
+        /// Adds default congestion control components.
         /// </summary>
-        /// <param name="collection">
+        /// <param name="services">
+        /// The services collection.
+        /// </param>
+        /// <returns>
         /// The <see cref="IServiceCollection"/>.
+        /// </returns>
+        public static IServiceCollection AddCongestionControl(this IServiceCollection services)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            AddCongestionControl(services, options =>
+            {
+                options.AddRequestRateLimiter();
+            });
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds congestion control components.
+        /// </summary>
+        /// <param name="services">
+        /// The services collection.
         /// </param>
         /// <param name="configure">
         /// The congestion control configuration options.
@@ -48,11 +74,11 @@ namespace AspNetCore.CongestionControl
         /// <returns>
         /// The <see cref="IServiceCollection"/>.
         /// </returns>
-        public static IServiceCollection AddCongestionControl(this IServiceCollection collection, Action<CongestionControlConfiguration> configure)
+        public static IServiceCollection AddCongestionControl(this IServiceCollection services, Action<CongestionControlConfiguration> configure)
         {
-            if (collection == null)
+            if (services == null)
             {
-                throw new ArgumentNullException(nameof(collection));
+                throw new ArgumentNullException(nameof(services));
             }
 
             if (configure == null)
@@ -63,17 +89,20 @@ namespace AspNetCore.CongestionControl
             var options = new CongestionControlConfiguration();
 
             configure(options);
-            
-            // Wire-up client identifier provider
-            if (options.ClientIdentifierProvider == null)
-            {
-                options.ClientIdentifierProvider = new HeaderBasedClientIdentifierProvider();
 
-                collection.AddSingleton<IClientIdentifierProvider, HeaderBasedClientIdentifierProvider>();
+            // Wire-up client identifier providers
+            if (!options.ClientIdentifierProviders.Any())
+            {
+                options.ClientIdentifierProviders.Add(new HeaderBasedClientIdentifierProvider());
+
+                services.AddSingleton<IClientIdentifierProvider, HeaderBasedClientIdentifierProvider>();
             }
             else
             {
-                collection.AddSingleton(provider => options.ClientIdentifierProvider);
+                foreach (var provider in options.ClientIdentifierProviders)
+                {
+                    services.AddSingleton<IClientIdentifierProvider>(provider);
+                }
             }
 
             // Wire-up rate limit response formatter
@@ -81,40 +110,45 @@ namespace AspNetCore.CongestionControl
             {
                 options.HttpResponseFormatter = new DefaultHttpResponseFormatter();
 
-                collection.AddSingleton<IHttpResponseFormatter, DefaultHttpResponseFormatter>();
+                services.AddSingleton<IHttpResponseFormatter, DefaultHttpResponseFormatter>();
             }
             else
             {
-                collection.AddSingleton(provider => options.HttpResponseFormatter);
+                services.AddSingleton(provider => options.HttpResponseFormatter);
             }
 
             // Wire-up configurations and rate limiters
-            collection.AddSingleton(provider => options);
+            services.AddSingleton(provider => options);
 
             if (options.RequestRateLimiterConfiguration != null)
             {
-                collection.AddSingleton(provider => options.RequestRateLimiterConfiguration);
+                services.AddSingleton(provider => options.RequestRateLimiterConfiguration);
+                services.AddTransient<ITokenBucketConsumer, InMemoryTokenBucketConsumer>();
             }
 
             if (options.ConcurrentRequestLimiterConfiguration != null)
             {
-                collection.AddSingleton(provider => options.ConcurrentRequestLimiterConfiguration);
+                services.AddSingleton(provider => options.ConcurrentRequestLimiterConfiguration);
+                services.AddTransient<IConcurrentRequestsManager, InMemoryConcurrentRequestsManager>();
             }
 
             if (options.RedisConfiguration != null)
             {
-                collection.AddSingleton(provider => options.RedisConfiguration);
-                collection.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(options.RedisConfiguration.Options));
-                collection.AddTransient<IConcurrentRequestsManager, RedisConcurrentRequestsManager>();
-                collection.AddTransient<ITokenBucketConsumer, RedisTokenBucketConsumer>();
-            }
-            else
-            {
-                collection.AddTransient<IConcurrentRequestsManager, InMemoryConcurrentRequestsManager>();
-                collection.AddTransient<ITokenBucketConsumer, InMemoryTokenBucketConsumer>();
+                services.AddSingleton(provider => options.RedisConfiguration);
+                services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(options.RedisConfiguration.Options));
+
+                if (options.RequestRateLimiterConfiguration != null)
+                {
+                    services.AddTransient<ITokenBucketConsumer, RedisTokenBucketConsumer>();
+                }
+
+                if (options.ConcurrentRequestLimiterConfiguration != null)
+                {
+                    services.AddTransient<IConcurrentRequestsManager, RedisConcurrentRequestsManager>();
+                }
             }
 
-            return collection;
+            return services;
         }
     }
 }

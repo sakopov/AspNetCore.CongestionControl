@@ -1,253 +1,151 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="SkipListTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Machine.Specifications;
+    using FluentAssertions;
     using Moq;
     using SortedSet;
-    using It = Machine.Specifications.It;
+    using Xunit;
 
-    class SkipListTests
+    public class SkipListTests
     {
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_creating_new_skip_list_instance
+        [Fact(DisplayName = "New Skip List Instance")]
+        public void NewSkipListInstance()
         {
-            Because of = () =>
-            {
-                _skipList = new SkipList();
-            };
+            // When skip list is initialized
+            var skipList = new SkipList();
 
-            It should_create_the_head_node = () =>
-            {
-                _skipList.Head.ShouldNotBeNull();
-            };
+            // Then it should create the head node
+            skipList.Head.Should().NotBeNull();
 
-            It should_initialize_head_node_with_maximum_number_of_levels = () =>
-            {
-                _skipList.Head.Levels.Count.ShouldEqual(SkipList.SkipListMaxLevel);
-            };
+            // And it should initialize head node with maximum number of levels
+            skipList.Head.Levels.Count.Should().Be(SkipList.SkipListMaxLevel);
 
-            It should_set_the_back_link_on_the_head_node_to_null = () =>
-            {
-                _skipList.Head.Backward.ShouldBeNull();
-            };
+            // And it should set the back link on the head node to null
+            skipList.Head.Backward.Should().BeNull();
 
-            It should_set_the_tail_node_to_null = () =>
-            {
-                _skipList.Tail.ShouldBeNull();
-            };
+            // And it should set the tail node to null
+            skipList.Tail.Should().BeNull();
 
-            It should_set_the_length_to_0 = () =>
-            {
-                _skipList.Length.ShouldEqual(0);
-            };
+            // And it should set the length to 0
+            skipList.Length.Should().Be(0);
 
-            It should_set_the_levels_to_1 = () =>
-            {
-                _skipList.Levels.ShouldEqual(1);
-            };
-
-            static SkipList _skipList;
+            // And it should set the levels to 1
+            skipList.Levels.Should().Be(1);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_inserting_first_node_at_level_1
+        [Fact(DisplayName = "Inserting First Node At Level 1")]
+        public void InsertingFirstNodeAtLevel1()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.Setup(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-            };
-
-            Because of = () =>
-            {
-                _newNode = _skipList.Insert(Score, Element);
-            };
-
-            It should_return_the_inserted_node = () =>
-            {
-                _newNode.ShouldNotBeNull();
-                _newNode.Score.ShouldEqual(Score);
-                _newNode.Element.ShouldEqual(Element);
-                _newNode.Backward.ShouldBeNull();
-                _newNode.Levels.Count.ShouldEqual(1);
-            };
-
-            It should_make_new_node_the_tail_node = () =>
-            {
-                _skipList.Tail.ShouldEqual(_newNode);
-            };
-
-            It should_link_head_node_at_level_1_to_new_node = () =>
-            {
-                _skipList.Head.Levels[0].Forward.ShouldEqual(_newNode);
-                _skipList.Head.Levels[0].Span.ShouldEqual(1);
-            };
-
-            It should_update_length_of_the_skip_list_to_1 = () =>
-            {
-                _skipList.Length.ShouldEqual(1);
-            };
-
-            It should_update_the_level_count_to_1 = () =>
-            {
-                _skipList.Levels.ShouldEqual(1);
-            };
-
+            // Given
             const int Score = 1;
             const string Element = "one";
 
-            static SkipListNode _newNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.Setup(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+
+            // When a node is inserted at level 1
+            var newNode = skipList.Insert(Score, Element);
+
+            // Then it should return the inserted node
+            newNode.Should().NotBeNull();
+            newNode.Score.Should().Be(Score);
+            newNode.Element.Should().Be(Element);
+            newNode.Backward.Should().BeNull();
+            newNode.Levels.Count.Should().Be(1);
+
+            // And it should make new node the tail node
+            skipList.Tail.Should().Be(newNode);
+
+            // And it should link head node at level 1 to new node
+            skipList.Head.Levels[0].Forward.Should().Be(newNode);
+            skipList.Head.Levels[0].Span.Should().Be(1);
+
+            // And it should update length of the skip list to 1
+            skipList.Length.Should().Be(1);
+
+            // And it should update the level count to 1
+            skipList.Levels.Should().Be(1);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_inserting_first_node_at_level_1_and_last_node_at_level_2
+        [Fact(DisplayName = "Inserting First Node At Level 1 and Last Node At Level 2")]
+        public void InsertingFirstNodeAtLevel1AndLastNodeAtLevel2()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1)
-                    .Returns(2);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-                _firstNode = _skipList.Insert(FirstScore, FirstElement);
-            };
-
-            Because of = () =>
-            {
-                _lastNode = _skipList.Insert(LastScore, LastElement);
-            };
-
-            It should_return_the_inserted_node = () =>
-            {
-                _lastNode.ShouldNotBeNull();
-                _lastNode.Score.ShouldEqual(LastScore);
-                _lastNode.Element.ShouldEqual(LastElement);
-                _lastNode.Backward.ShouldEqual(_firstNode);
-                _lastNode.Levels.Count.ShouldEqual(2);
-            };
-
-            It should_link_last_node_to_first_node = () =>
-            {
-                _lastNode.Backward.ShouldEqual(_firstNode);
-            };
-
-            It should_link_first_node_to_last_node = () =>
-            {
-                _firstNode.Levels[0].Forward.ShouldEqual(_lastNode);
-                _firstNode.Levels[0].Span.ShouldEqual(1);
-            };
-
-            It should_make_last_node_the_tail_node = () =>
-            {
-                _skipList.Tail.ShouldEqual(_lastNode);
-            };
-
-            It should_link_head_node_at_level_2_to_last_node = () =>
-            {
-                _skipList.Head.Levels[1].Forward.ShouldEqual(_lastNode);
-                _skipList.Head.Levels[1].Span.ShouldEqual(2);
-            };
-
-            It should_update_length_to_2 = () =>
-            {
-                _skipList.Length.ShouldEqual(2);
-            };
-
-            It should_update_the_level_count_to_2 = () =>
-            {
-                _skipList.Levels.ShouldEqual(2);
-            };
-
+            // Given
             const int FirstScore = 1;
             const int LastScore = 5;
             const string FirstElement = "one";
             const string LastElement = "five";
 
-            static SkipListNode _firstNode;
-            static SkipListNode _lastNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+
+            nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1)
+                .Returns(2);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+
+            // When inserting first and last nodes
+            var firstNode = skipList.Insert(FirstScore, FirstElement);
+            var lastNode = skipList.Insert(LastScore, LastElement);
+
+            // Then it should return the inserted node
+            lastNode.Should().NotBeNull();
+            lastNode.Score.Should().Be(LastScore);
+            lastNode.Element.Should().Be(LastElement);
+            lastNode.Backward.Should().Be(firstNode);
+            lastNode.Levels.Count.Should().Be(2);
+
+            // And it should link last node to first node
+            lastNode.Backward.Should().Be(firstNode);
+
+            // And it should link first node to last node
+            firstNode.Levels[0].Forward.Should().Be(lastNode);
+            firstNode.Levels[0].Span.Should().Be(1);
+
+            // And it should make last node the tail node
+            skipList.Tail.Should().Be(lastNode);
+
+            // And it should link head node at level 2 to last node
+            skipList.Head.Levels[1].Forward.Should().Be(lastNode);
+            skipList.Head.Levels[1].Span.Should().Be(2);
+
+            // And it should update length to 2
+            skipList.Length.Should().Be(2);
+
+            // And it should update the level count to 2
+            skipList.Levels.Should().Be(2);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_inserting_first_node_at_level_1_last_node_at_level_2_and_middle_node_at_level_3
+        [Fact(DisplayName = "Inserting First Node At Level 1, Last Node At Level 2 and Middle Node At Level 3")]
+        public void InsertingFirstNodeAtLevel1LastNodeAtLevel2AndMiddleNodeAtLevel3()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1)
-                    .Returns(2)
-                    .Returns(3);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-                _firstNode = _skipList.Insert(FirstScore, FirstElement);
-                _lastNode = _skipList.Insert(LastScore, LastElement);
-            };
-
-            Because of = () =>
-            {
-                _middleNode = _skipList.Insert(MiddleScore, MiddleElement);
-            };
-
-            It should_return_the_inserted_node = () =>
-            {
-                _middleNode.ShouldNotBeNull();
-                _middleNode.Score.ShouldEqual(MiddleScore);
-                _middleNode.Element.ShouldEqual(MiddleElement);
-                _middleNode.Backward.ShouldEqual(_firstNode);
-                _middleNode.Levels.Count.ShouldEqual(3);
-            };
-
-            It should_link_first_node_to_middle_node = () =>
-            {
-                _firstNode.Levels[0].Forward.ShouldEqual(_middleNode);
-                _firstNode.Levels[0].Span.ShouldEqual(1);
-            };
-
-            It should_link_middle_node_to_first_node = () =>
-            {
-                _middleNode.Backward.ShouldEqual(_firstNode);
-            };
-
-            It should_link_middle_node_to_last_node_at_levels_1_and_2 = () =>
-            {
-                _middleNode.Levels[0].Forward.ShouldEqual(_lastNode);
-                _middleNode.Levels[0].Span.ShouldEqual(1);
-                _middleNode.Levels[1].Forward.ShouldEqual(_lastNode);
-                _middleNode.Levels[1].Span.ShouldEqual(1);
-            };
-
-            It should_link_last_node_to_middle_node = () =>
-            {
-                _lastNode.Backward.ShouldEqual(_middleNode);
-            };
-
-            It should_make_last_node_the_tail_node = () =>
-            {
-                _skipList.Tail.ShouldEqual(_lastNode);
-            };
-
-            It should_link_head_node_at_levels_2_and_3_to_middle_node = () =>
-            {
-                _skipList.Head.Levels[1].Forward.ShouldEqual(_middleNode);
-                _skipList.Head.Levels[1].Span.ShouldEqual(2);
-                _skipList.Head.Levels[2].Forward.ShouldEqual(_middleNode);
-                _skipList.Head.Levels[2].Span.ShouldEqual(2);
-            };
-
-            It should_update_length_of_the_skip_list_to_3 = () =>
-            {
-                _skipList.Length.ShouldEqual(3);
-            };
-
-            It should_update_the_level_count_to_3 = () =>
-            {
-                _skipList.Levels.ShouldEqual(3);
-            };
-
+            // Given
             const int FirstScore = 1;
             const int LastScore = 5;
             const int MiddleScore = 3;
@@ -255,129 +153,97 @@
             const string LastElement = "five";
             const string MiddleElement = "third";
 
-            static SkipListNode _firstNode;
-            static SkipListNode _lastNode;
-            static SkipListNode _middleNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1)
+                .Returns(2)
+                .Returns(3);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+
+            // When inserting all nodes
+            var firstNode = skipList.Insert(FirstScore, FirstElement);
+            var lastNode = skipList.Insert(LastScore, LastElement);
+            var middleNode = skipList.Insert(MiddleScore, MiddleElement);
+
+            // Then it should return the inserted node
+            middleNode.Should().NotBeNull();
+            middleNode.Score.Should().Be(MiddleScore);
+            middleNode.Element.Should().Be(MiddleElement);
+            middleNode.Backward.Should().Be(firstNode);
+            middleNode.Levels.Count.Should().Be(3);
+
+            // And it should link first node to middle node
+            firstNode.Levels[0].Forward.Should().Be(middleNode);
+            firstNode.Levels[0].Span.Should().Be(1);
+
+            // And it should link middle node to first node
+            middleNode.Backward.Should().Be(firstNode);
+
+            // And it should link middle node to last node at levels 1 and 2
+            middleNode.Levels[0].Forward.Should().Be(lastNode);
+            middleNode.Levels[0].Span.Should().Be(1);
+            middleNode.Levels[1].Forward.Should().Be(lastNode);
+            middleNode.Levels[1].Span.Should().Be(1);
+
+            // And it should link last node to middle node
+            lastNode.Backward.Should().Be(middleNode);
+
+            // And it should make last node the tail node
+            skipList.Tail.Should().Be(lastNode);
+
+            // And it should link head node at levels 2 and 3 to middle node
+            skipList.Head.Levels[1].Forward.Should().Be(middleNode);
+            skipList.Head.Levels[1].Span.Should().Be(2);
+            skipList.Head.Levels[2].Forward.Should().Be(middleNode);
+            skipList.Head.Levels[2].Span.Should().Be(2);
+
+            // And it should update length of the skip list to 3
+            skipList.Length.Should().Be(3);
+
+            // And it should update the level count to 3
+            skipList.Levels.Should().Be(3);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_deleting_the_only_node_in_the_skip_list
+        [Fact(DisplayName = "Deleting the Only Node In The Skip List")]
+        public void DeletingTheOnlyNodeInTheSkipList()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.Setup(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-
-                _skipList.Insert(Score, Element);
-            };
-
-            Because of = () =>
-            {
-                _deleteResult = _skipList.Delete(Score, Element);
-            };
-
-            It should_successfully_delete_node = () =>
-            {
-                _deleteResult.ShouldBeTrue();
-            };
-
-            It should_set_tail_to_null = () =>
-            {
-                _skipList.Tail.ShouldBeNull();
-            };
-
-            It should_unlink_head_node_at_level_1_from_deleted_node = () =>
-            {
-                _skipList.Head.Levels[0].Forward.ShouldBeNull();
-                _skipList.Head.Levels[0].Span.ShouldEqual(0);
-            };
-
-            It should_update_length_of_the_skip_list_to_1 = () =>
-            {
-                _skipList.Length.ShouldEqual(0);
-            };
-
-            It should_update_the_level_count_to_1 = () =>
-            {
-                _skipList.Levels.ShouldEqual(1);
-            };
-
+            // Given
             const int Score = 1;
             const string Element = "one";
 
-            static bool _deleteResult;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.Setup(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+
+            skipList.Insert(Score, Element);
+
+            // When node is deleted
+            var deleteResult = skipList.Delete(Score, Element);
+
+            // Then it should successfully delete node
+            deleteResult.Should().BeTrue();
+
+            // And it should set tail to null
+            skipList.Tail.Should().BeNull();
+
+            // And it should unlink head node at level 1 from deleted node
+            skipList.Head.Levels[0].Forward.Should().BeNull();
+            skipList.Head.Levels[0].Span.Should().Be(0);
+
+            // And it should update length of the skip list to 1
+            skipList.Length.Should().Be(0);
+
+            // And it should update the level count to 1
+            skipList.Levels.Should().Be(1);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_deleting_the_middle_node_from_skip_list
+        [Fact(DisplayName = "Deleting the Middle Node From Skip List")]
+        public void DeletingTheMiddleNodeFromSkipList()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1)
-                    .Returns(2)
-                    .Returns(3);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-                _firstNode = _skipList.Insert(FirstScore, FirstElement);
-                _lastNode = _skipList.Insert(LastScore, LastElement);
-                _middleNode = _skipList.Insert(MiddleScore, MiddleElement);
-            };
-
-            Because of = () =>
-            {
-                _deleteResult = _skipList.Delete(MiddleScore, MiddleElement);
-            };
-
-            It should_successfully_delete_node = () =>
-            {
-                _deleteResult.ShouldBeTrue();
-            };
-
-            It should_link_first_node_to_last_node = () =>
-            {
-                _firstNode.Levels[0].Forward.ShouldEqual(_lastNode);
-                _firstNode.Levels[0].Span.ShouldEqual(1);
-            };
-
-            It should_link_last_node_to_first_node = () =>
-            {
-                _lastNode.Backward.ShouldEqual(_firstNode);
-            };
-
-            It should_make_last_node_the_tail_node = () =>
-            {
-                _skipList.Tail.ShouldEqual(_lastNode);
-            };
-
-            It should_link_head_node_at_level_2_to_last_node = () =>
-            {
-                _skipList.Head.Levels[1].Forward.ShouldEqual(_lastNode);
-                _skipList.Head.Levels[1].Span.ShouldEqual(2);
-            };
-
-            It should_unlink_head_node_at_level_3_from_deleted_middle_node = () =>
-            {
-                _skipList.Head.Levels[2].Forward.ShouldBeNull();
-                _skipList.Head.Levels[2].Span.ShouldEqual(0);
-            };
-
-            It should_update_length_of_the_skip_list_to_2 = () =>
-            {
-                _skipList.Length.ShouldEqual(2);
-            };
-
-            It should_update_the_level_count_to_2 = () =>
-            {
-                _skipList.Levels.ShouldEqual(2);
-            };
-
+            // Given
             const int FirstScore = 1;
             const int LastScore = 5;
             const int MiddleScore = 3;
@@ -385,63 +251,52 @@
             const string LastElement = "five";
             const string MiddleElement = "third";
 
-            static bool _deleteResult;
-            static SkipListNode _firstNode;
-            static SkipListNode _lastNode;
-            static SkipListNode _middleNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1)
+                .Returns(2)
+                .Returns(3);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+            var firstNode = skipList.Insert(FirstScore, FirstElement);
+            var lastNode = skipList.Insert(LastScore, LastElement);
+            var middleNode = skipList.Insert(MiddleScore, MiddleElement);
+
+            // When the middle node is deleted
+            var deleteResult = skipList.Delete(MiddleScore, MiddleElement);
+
+            // Then it should successfully delete node
+            deleteResult.Should().BeTrue();
+
+            // And it should link first node to last node
+            firstNode.Levels[0].Forward.Should().Be(lastNode);
+            firstNode.Levels[0].Span.Should().Be(1);
+
+            // And it should link last node to first node
+            lastNode.Backward.Should().Be(firstNode);
+
+            // And it should make last node the tail node
+            skipList.Tail.Should().Be(lastNode);
+
+            // And it should link head node at level 2 to last node
+            skipList.Head.Levels[1].Forward.Should().Be(lastNode);
+            skipList.Head.Levels[1].Span.Should().Be(2);
+
+            // And it should unlink head node at level 3 from deleted middle node
+            skipList.Head.Levels[2].Forward.Should().BeNull();
+            skipList.Head.Levels[2].Span.Should().Be(0);
+
+            // And it should update length of the skip list to 2
+            skipList.Length.Should().Be(2);
+
+            // And it should update the level count to 2
+            skipList.Levels.Should().Be(2);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_deleting_the_last_node_from_skip_list
+        [Fact(DisplayName = "Deleting the Last Node From Skip List")]
+        public void DeletingTheLastNodeFromSkipList()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1)
-                    .Returns(2)
-                    .Returns(3);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-                _firstNode = _skipList.Insert(FirstScore, FirstElement);
-                _lastNode = _skipList.Insert(LastScore, LastElement);
-                _middleNode = _skipList.Insert(MiddleScore, MiddleElement);
-            };
-
-            Because of = () =>
-            {
-                _deleteResult = _skipList.Delete(LastScore, LastElement);
-            };
-
-            It should_successfully_delete_node = () =>
-            {
-                _deleteResult.ShouldBeTrue();
-            };
-
-            It should_unlink_middle_node_from_last_node_at_levels_1_and_2 = () =>
-            {
-                _middleNode.Levels[0].Forward.ShouldBeNull();
-                _middleNode.Levels[0].Span.ShouldEqual(0);
-                _middleNode.Levels[1].Forward.ShouldBeNull();
-                _middleNode.Levels[1].Span.ShouldEqual(0);
-            };
-
-            It should_make_middle_node_the_tail_node = () =>
-            {
-                _skipList.Tail.ShouldEqual(_middleNode);
-            };
-
-            It should_update_length_of_the_skip_list_to_2 = () =>
-            {
-                _skipList.Length.ShouldEqual(2);
-            };
-
-            It should_update_the_level_count_to_3 = () =>
-            {
-                _skipList.Levels.ShouldEqual(3);
-            };
-
+            // Given
             const int FirstScore = 1;
             const int LastScore = 5;
             const int MiddleScore = 3;
@@ -449,125 +304,66 @@
             const string LastElement = "five";
             const string MiddleElement = "third";
 
-            static bool _deleteResult;
-            static SkipListNode _firstNode;
-            static SkipListNode _lastNode;
-            static SkipListNode _middleNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1)
+                .Returns(2)
+                .Returns(3);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+            var firstNode = skipList.Insert(FirstScore, FirstElement);
+            var lastNode = skipList.Insert(LastScore, LastElement);
+            var middleNode = skipList.Insert(MiddleScore, MiddleElement);
+
+            // When the last node is deleted
+            var deleteResult = skipList.Delete(LastScore, LastElement);
+
+            // Then it should successfully delete node
+            deleteResult.Should().BeTrue();
+
+            // And it should unlink middle node from last node at levels 1 and 2
+            middleNode.Levels[0].Forward.Should().BeNull();
+            middleNode.Levels[0].Span.Should().Be(0);
+            middleNode.Levels[1].Forward.Should().BeNull();
+            middleNode.Levels[1].Span.Should().Be(0);
+
+            // And it should make middle node the tail node
+            skipList.Tail.Should().Be(middleNode);
+
+            // And it should update length of the skip list to 2
+            skipList.Length.Should().Be(2);
+
+            // And it should update the level count to 3
+            skipList.Levels.Should().Be(3);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_updating_the_only_node_in_the_skip_list
+        [Fact(DisplayName = "Updating the Only Node in the Skip List")]
+        public void UpdatingTheOnlyNodeInTheSkipList()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.Setup(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-
-                _skipList.Insert(Score, Element);
-            };
-
-            Because of = () =>
-            {
-                _updatedNode = _skipList.Update(Score, Element, NewScore);
-            };
-
-            It should_successfully_update_node = () =>
-            {
-                _updatedNode.ShouldNotBeNull();
-                _updatedNode.Score.ShouldEqual(NewScore);
-            };
-
+            // Given
             const int Score = 1;
             const int NewScore = 2;
             const string Element = "one";
 
-            static SkipListNode _updatedNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.Setup(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+            skipList.Insert(Score, Element);
+
+            // When skip list node is updated
+            var updatedNode = skipList.Update(Score, Element, NewScore);
+
+            // Then it should successfully update node
+            updatedNode.Should().NotBeNull();
+            updatedNode.Score.Should().Be(NewScore);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_updating_the_middle_node_in_skip_list_with_larger_score_than_last_node
+        [Fact(DisplayName = "Updating the Middle Node in Skip List with Larger Score than Last Node")]
+        public void UpdatingTheMiddleNodeInSkipListWithLargerScoreThanLastNode()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1)
-                    .Returns(2)
-                    .Returns(3)
-                    .Returns(3);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-                _firstNode = _skipList.Insert(FirstScore, FirstElement);
-                _lastNode = _skipList.Insert(LastScore, LastElement);
-                _middleNode = _skipList.Insert(MiddleScore, MiddleElement);
-            };
-
-            Because of = () =>
-            {
-                _updatedNode = _skipList.Update(MiddleScore, MiddleElement, NewMiddleScore);
-            };
-
-            It should_successfully_update_node = () =>
-            {
-                _updatedNode.ShouldNotBeNull();
-            };
-
-            It should_link_first_node_to_last_node = () =>
-            {
-                _firstNode.Levels[0].Forward.ShouldEqual(_lastNode);
-                _firstNode.Levels[0].Span.ShouldEqual(1);
-            };
-
-            It should_link_last_node_to_first_node = () =>
-            {
-                _lastNode.Backward.ShouldEqual(_firstNode);
-            };
-
-            It should_link_last_node_to_updated_node_at_levels_1_and_2 = () =>
-            {
-                _lastNode.Levels[0].Forward.ShouldEqual(_updatedNode);
-                _lastNode.Levels[0].Span.ShouldEqual(1);
-                _lastNode.Levels[1].Forward.ShouldEqual(_updatedNode);
-                _lastNode.Levels[1].Span.ShouldEqual(1);
-            };
-
-            It should_link_updated_node_to_last_node = () =>
-            {
-                _updatedNode.Backward.ShouldEqual(_lastNode);
-            };
-
-            It should_make_updated_node_the_tail_node = () =>
-            {
-                _skipList.Tail.ShouldEqual(_updatedNode);
-            };
-
-            It should_link_head_node_at_level_2_to_last_node = () =>
-            {
-                _skipList.Head.Levels[1].Forward.ShouldEqual(_lastNode);
-                _skipList.Head.Levels[1].Span.ShouldEqual(2);
-            };
-
-            It should_unlink_head_node_at_level_3_from_updated_node = () =>
-            {
-                _skipList.Head.Levels[2].Forward.ShouldEqual(_updatedNode);
-                _skipList.Head.Levels[2].Span.ShouldEqual(3);
-            };
-
-            It should_update_length_of_the_skip_list_to_3 = () =>
-            {
-                _skipList.Length.ShouldEqual(3);
-            };
-
-            It should_update_the_level_count_to_3 = () =>
-            {
-                _skipList.Levels.ShouldEqual(3);
-            };
-
+            // Given
             const int FirstScore = 1;
             const int LastScore = 5;
             const int MiddleScore = 3;
@@ -576,73 +372,62 @@
             const string LastElement = "five";
             const string MiddleElement = "third";
 
-            static SkipListNode _updatedNode;
-            static SkipListNode _firstNode;
-            static SkipListNode _lastNode;
-            static SkipListNode _middleNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1)
+                .Returns(2)
+                .Returns(3)
+                .Returns(3);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+            var firstNode = skipList.Insert(FirstScore, FirstElement);
+            var lastNode = skipList.Insert(LastScore, LastElement);
+            var middleNode = skipList.Insert(MiddleScore, MiddleElement);
+
+            // When the middle node is updated
+            var updatedNode = skipList.Update(MiddleScore, MiddleElement, NewMiddleScore);
+
+            // Then it should successfully update node
+            updatedNode.Should().NotBeNull();
+
+            // And it should link first node to last node
+            firstNode.Levels[0].Forward.Should().Be(lastNode);
+            firstNode.Levels[0].Span.Should().Be(1);
+
+            // And it should link last node to first node
+            lastNode.Backward.Should().Be(firstNode);
+
+            // And it should link last node to updated node at levels 1 and 2
+            lastNode.Levels[0].Forward.Should().Be(updatedNode);
+            lastNode.Levels[0].Span.Should().Be(1);
+            lastNode.Levels[1].Forward.Should().Be(updatedNode);
+            lastNode.Levels[1].Span.Should().Be(1);
+
+            // And it should link updated node to last node
+            updatedNode.Backward.Should().Be(lastNode);
+
+            // And it should make updated node the tail node
+            skipList.Tail.Should().Be(updatedNode);
+
+            // And it should link head node at level 2 to last node
+            skipList.Head.Levels[1].Forward.Should().Be(lastNode);
+            skipList.Head.Levels[1].Span.Should().Be(2);
+
+            // And it should unlink head node at level 3 from updated node
+            skipList.Head.Levels[2].Forward.Should().Be(updatedNode);
+            skipList.Head.Levels[2].Span.Should().Be(3);
+
+            // And it should update length of skip list to 3
+            skipList.Length.Should().Be(3);
+
+            // And it should update the level count to 3
+            skipList.Levels.Should().Be(3);
         }
 
-        [Subject(typeof(SkipList), "Skip List"), Tags("Positive Test")]
-        public class When_deleting_a_range_of_nodes_by_score_from_skip_list
+        [Fact(DisplayName = "Deleting a Range of Nodes by Score From Skip List")]
+        public void DeletingARangeOfNodesByScoreFromSkipList()
         {
-            Establish context = () =>
-            {
-                _nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
-                    .Returns(1)
-                    .Returns(2)
-                    .Returns(3);
-
-                _skipList = new SkipList(_nodeLevelGeneratorMock.Object);
-                _firstNode = _skipList.Insert(FirstScore, FirstElement);
-                _lastNode = _skipList.Insert(LastScore, LastElement);
-                _middleNode = _skipList.Insert(MiddleScore, MiddleElement);
-            };
-
-            Because of = () =>
-            {
-                _nodesDeleted = _skipList.DeleteRangeByScore(new SkipListRange
-                {
-                    Min = FirstScore,
-                    Max = MiddleScore
-                });
-            };
-
-            It should_successfully_delete_nodes_in_range = () =>
-            {
-                _nodesDeleted.ShouldEqual(2);
-            };
-
-            It should_make_last_node_the_tail_node = () =>
-            {
-                _skipList.Tail.ShouldEqual(_lastNode);
-            };
-
-            It should_link_head_node_at_levels_1_and_2_to_last_node = () =>
-            {
-                _skipList.Head.Levels[0].Forward.ShouldEqual(_lastNode);
-                _skipList.Head.Levels[0].Span.ShouldEqual(1);
-                _skipList.Head.Levels[1].Forward.ShouldEqual(_lastNode);
-                _skipList.Head.Levels[1].Span.ShouldEqual(1);
-            };
-
-            It should_unlink_head_node_at_level_3_from_deleted_middle_node = () =>
-            {
-                _skipList.Head.Levels[2].Forward.ShouldBeNull();
-                _skipList.Head.Levels[2].Span.ShouldEqual(0);
-            };
-
-            It should_update_length_of_the_skip_list_to_1 = () =>
-            {
-                _skipList.Length.ShouldEqual(1);
-            };
-
-            It should_update_the_level_count_to_2 = () =>
-            {
-                _skipList.Levels.ShouldEqual(2);
-            };
-
+            // Given
             const int FirstScore = 1;
             const int LastScore = 5;
             const int MiddleScore = 3;
@@ -650,12 +435,45 @@
             const string LastElement = "five";
             const string MiddleElement = "third";
 
-            static long _nodesDeleted;
-            static SkipListNode _firstNode;
-            static SkipListNode _lastNode;
-            static SkipListNode _middleNode;
-            static Mock<ISkipListNodeLevelGenerator> _nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
-            static SkipList _skipList;
+            var nodeLevelGeneratorMock = new Mock<ISkipListNodeLevelGenerator>();
+            nodeLevelGeneratorMock.SetupSequence(mock => mock.Generate(Moq.It.IsAny<int>()))
+                .Returns(1)
+                .Returns(2)
+                .Returns(3);
+
+            var skipList = new SkipList(nodeLevelGeneratorMock.Object);
+            var firstNode = skipList.Insert(FirstScore, FirstElement);
+            var lastNode = skipList.Insert(LastScore, LastElement);
+            var middleNode = skipList.Insert(MiddleScore, MiddleElement);
+
+            // When a range of nodes is deleted
+            var nodesDeleted = skipList.DeleteRangeByScore(new SkipListRange
+            {
+                Min = FirstScore,
+                Max = MiddleScore
+            });
+
+            // Then it should successfully delete nodes in range
+            nodesDeleted.Should().Be(2);
+
+            // And it should make last node the tail node
+            skipList.Tail.Should().Be(lastNode);
+
+            // And it should link head node at levels 1 and 2 to last node
+            skipList.Head.Levels[0].Forward.Should().Be(lastNode);
+            skipList.Head.Levels[0].Span.Should().Be(1);
+            skipList.Head.Levels[1].Forward.Should().Be(lastNode);
+            skipList.Head.Levels[1].Span.Should().Be(1);
+
+            // And it should unlink head node at levels 3 from deleted middle node
+            skipList.Head.Levels[2].Forward.Should().BeNull();
+            skipList.Head.Levels[2].Span.Should().Be(0);
+
+            // And it should update length of the skip list to 1
+            skipList.Length.Should().Be(1);
+
+            // And it should update the level count to 2
+            skipList.Levels.Should().Be(2);
         }
     }
 }

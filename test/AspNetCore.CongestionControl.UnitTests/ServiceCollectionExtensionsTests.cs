@@ -1,308 +1,304 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ServiceCollectionExtensionsTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Configuration;
-    using Machine.Specifications;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.DependencyInjection;
-    using StackExchange.Redis;
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using It = Machine.Specifications.It;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.DependencyInjection;
+    using Configuration;
+    using FluentAssertions;
+    using StackExchange.Redis;
+    using Xunit;
 
-    class ServiceCollectionExtensionsTests
+    public class ServiceCollectionExtensionsTests
     {
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Negative Test")]
-        public class When_collection_argument_is_null
+        [Fact(DisplayName = "Service Collection Argument Is Null")]
+        public void ServiceCollectionArgumentIsNull()
         {
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => ServiceCollectionExtensions.AddCongestionControl(null, null));
-            };
+            // When congestion control is added without service collection argument
+            var exception = Record.Exception(() => ServiceCollectionExtensions.AddCongestionControl(null, null));
 
-            It should_throw_argument_null_exception = () =>
-            {
-                _exception.ShouldBeOfExactType<ArgumentNullException>();
-                ((ArgumentNullException) _exception).ParamName.ShouldEqual("collection");
-            };
-
-            static Exception _exception;
+            // Then it should throw ArgumentNullException
+            exception.Should().BeOfType<ArgumentNullException>();
+            ((ArgumentNullException) exception).ParamName.Should().Be("services");
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Negative Test")]
-        public class When_configure_argument_is_null
+        [Fact(DisplayName = "Configure Argument Is Null")]
+        public void ConfigureArgumentIsNull()
         {
-            Because of = () =>
-            {
-                _exception = Catch.Exception(() => new ServiceCollection().AddCongestionControl(null));
-            };
+            // When congestion control is added without configure argument
+            var exception = Record.Exception(() => new ServiceCollection().AddCongestionControl(null));
 
-            It should_throw_argument_null_exception = () =>
-            {
-                _exception.ShouldBeOfExactType<ArgumentNullException>();
-                ((ArgumentNullException)_exception).ParamName.ShouldEqual("configure");
-            };
-
-            static Exception _exception;
+            // Then it should throw ArgumentNullException
+            exception.Should().BeOfType<ArgumentNullException>();
+            ((ArgumentNullException)exception).ParamName.Should().Be("configure");
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_client_identifier_provider_is_not_confiured
+        [Fact(DisplayName = "Client Identifier Provider Is Not Configured")]
+        public void ClientIdentifierProviderIsNotConfigured()
         {
-            Because of = () =>
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When client identifier provider is not explicitly configured
+            services.AddCongestionControl(options =>
             {
-                _services.AddCongestionControl(options =>
-                {
-                    _configuration = options;
-                });
-            };
+                configuration = options;
+            });
 
-            It should_set_client_identifier_provider_to_header_based_in_congestion_control_configuration = () =>
-            {
-                _configuration.ClientIdentifierProvider.ShouldNotBeNull();
-                _configuration.ClientIdentifierProvider.ShouldBeOfExactType<HeaderBasedClientIdentifierProvider>();
-            };
+            // Then it should be defaulted to header-based client identifier provider
+            configuration.ClientIdentifierProviders.Should().NotBeEmpty();
+            configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(HeaderBasedClientIdentifierProvider)).Should().BeTrue();
 
-            It should_add_client_identifier_provider_to_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IClientIdentifierProvider))
-                    .ShouldBeTrue();
-            };
-
-            static CongestionControlConfiguration _configuration;
-
-            static IServiceCollection _services = new ServiceCollection();
+            // And it should add header-based client identifier provider to the service collection
+            services.Any(service =>
+                service.ServiceType == typeof(IClientIdentifierProvider) &&
+                service.ImplementationType == typeof(HeaderBasedClientIdentifierProvider)).Should().BeTrue();
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_client_identifier_provider_is_custom
+        [Fact(DisplayName = "Client Identifier Provider Is Custom")]
+        public void ClientIdentifierProviderIsCustom()
         {
-            class CustomClientIdentifierProvider : IClientIdentifierProvider
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When a custom client identifier provider is added
+            services.AddCongestionControl(options =>
             {
-                public Task<string> ExecuteAsync(HttpContext httpContext)
-                {
-                    throw new NotImplementedException();
-                }
-            }
+                options.AddClientIdentifierProvider(new CustomClientIdentifierProvider());
+                configuration = options;
+            });
 
-            Because of = () =>
-            {
-                _services.AddCongestionControl(options =>
-                {
-                    options.AddClientIdentifierProvider(new CustomClientIdentifierProvider());
-                    _configuration = options;
-                });
-            };
+            // Then it should set client identifier provider in congestion control configuration
+            configuration.ClientIdentifierProviders.Should().NotBeEmpty();
+            configuration.ClientIdentifierProviders.Any(provider => provider.GetType() == typeof(CustomClientIdentifierProvider)).Should().BeTrue();
 
-            It should_set_client_identifier_provider_in_congestion_control_configuration = () =>
-            {
-                _configuration.ClientIdentifierProvider.ShouldNotBeNull();
-                _configuration.ClientIdentifierProvider.ShouldBeOfExactType<CustomClientIdentifierProvider>();
-            };
-
-            It should_add_client_identifier_provider_to_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IClientIdentifierProvider))
-                    .ShouldBeTrue();
-            };
-
-            static CongestionControlConfiguration _configuration;
-
-            static IServiceCollection _services = new ServiceCollection();
+            // And it should add client identifier provider to service collection
+            services.Any(service =>
+                service.ServiceType == typeof(IClientIdentifierProvider) &&
+                service.ImplementationInstance.GetType() == typeof(CustomClientIdentifierProvider)).Should().BeTrue();
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_http_response_formatter_is_not_configured
+        [Fact(DisplayName = "HTTP Response Formatter Is Not Configured")]
+        public void HttpResponseFormatterIsNotConfigured()
         {
-            Because of = () =>
+            // Given
+            CongestionControlConfiguration configuration = null;
+            var services = new ServiceCollection();
+
+            // When HTTP response formatter is not explicitly configured
+            services.AddCongestionControl(options =>
             {
-                _services.AddCongestionControl(options =>
-                {
-                    _configuration = options;
-                });
-            };
+                configuration = options;
+            });
 
-            It should_set_http_response_formatter_to_default_in_congestion_control_configuration = () =>
-            {
-                _configuration.HttpResponseFormatter.ShouldNotBeNull();
-                _configuration.HttpResponseFormatter.ShouldBeOfExactType<DefaultHttpResponseFormatter>();
-            };
+            // Then it should be defaulted to default HTTP response formatter
+            configuration.HttpResponseFormatter.Should().NotBeNull();
+            configuration.HttpResponseFormatter.Should().BeOfType<DefaultHttpResponseFormatter>();
 
-            It should_add_client_identifier_provider_to_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IHttpResponseFormatter))
-                    .ShouldBeTrue();
-            };
-
-            static CongestionControlConfiguration _configuration;
-
-            static IServiceCollection _services = new ServiceCollection();
+            // And it should add default HTTP response formatter to the service collection
+            services.Any(service =>
+                service.ServiceType == typeof(IHttpResponseFormatter) &&
+                service.ImplementationType == typeof(DefaultHttpResponseFormatter)).Should().BeTrue();
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_http_response_formatter_is_custom
+        [Fact(DisplayName = "HTTP Response Formatter Is Custom")]
+        public void HttpResponseFormatterIsCustom()
         {
-            class CustomHttpResponseFormatter : IHttpResponseFormatter
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When a custom HTTP response formatter is added
+            services.AddCongestionControl(options =>
             {
-                public Task FormatAsync(HttpContext httpContext, RateLimitContext rateLimitContext)
-                {
-                    throw new NotImplementedException();
-                }
-            }
+                options.AddHttpResponseFormatter(new CustomHttpResponseFormatter());
+                configuration = options;
+            });
 
-            Because of = () =>
-            {
-                _services.AddCongestionControl(options =>
-                {
-                    options.AddHttpResponseFormatter(new CustomHttpResponseFormatter());
-                    _configuration = options;
-                });
-            };
+            // Then it should set HTTP response formatter in congestion control configuration
+            configuration.HttpResponseFormatter.Should().NotBeNull();
+            configuration.HttpResponseFormatter.Should().BeOfType<CustomHttpResponseFormatter>();
 
-            It should_set_client_identifier_provider_in_congestion_control_configuration = () =>
-            {
-                _configuration.HttpResponseFormatter.ShouldNotBeNull();
-                _configuration.HttpResponseFormatter.ShouldBeOfExactType<CustomHttpResponseFormatter>();
-            };
-
-            It should_add_client_identifier_provider_to_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IHttpResponseFormatter))
-                    .ShouldBeTrue();
-            };
-
-            static CongestionControlConfiguration _configuration;
-
-            static IServiceCollection _services = new ServiceCollection();
+            // And it should add HTTP response formatter to service collection
+            services.Any(service => service.ServiceType == typeof(IHttpResponseFormatter)).Should().BeTrue();
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_request_rate_limiter_is_configured
+        [Fact(DisplayName = "Request Rate Limiter Is Configured")]
+        public void RequestRateLimiterIsConfigured()
         {
-            Because of = () =>
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When request rate limiter is added explicitly
+            services.AddCongestionControl(options =>
             {
-                _services.AddCongestionControl(options =>
-                {
-                    options.AddRequestRateLimiter();
-                    _configuration = options;
-                });
-            };
+                options.AddRequestRateLimiter();
+                configuration = options;
+            });
 
-            It should_add_request_rate_limiter_configuration_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(RequestRateLimiterConfiguration))
-                    .ShouldBeTrue();
-            };
+            // Then it should add request rate limiter configuration to the service collection
+            services.Any(service => service.ServiceType == typeof(RequestRateLimiterConfiguration))
+                .Should().BeTrue();
 
-            static CongestionControlConfiguration _configuration;
-
-            static IServiceCollection _services = new ServiceCollection();
+            // And it should add in-memory token bucket consumer to the service collection
+            services.Any(service =>
+                service.ServiceType == typeof(ITokenBucketConsumer) &&
+                service.ImplementationType == typeof(InMemoryTokenBucketConsumer)).Should().BeTrue();
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_concurrent_request_rate_limiter_is_configured
+        [Fact(DisplayName = "Request Rate Limiter Is Configured With Redis Server")]
+        public void RequestRateLimiterIsConfiguredWithRedisServer()
         {
-            Because of = () =>
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When adding request rate limiter with redis
+            services.AddCongestionControl(options =>
             {
-                _services.AddCongestionControl(options =>
-                {
-                    options.AddConcurrentRequestLimiter();
-                    _configuration = options;
-                });
-            };
+                options.AddRedisStorage("127.0.0.1:6379");
+                options.AddRequestRateLimiter();
+                configuration = options;
+            });
 
-            It should_add_concurrent_request_rate_limiter_configuration_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(ConcurrentRequestLimiterConfiguration))
-                    .ShouldBeTrue();
-            };
+            // Then it should set Redis server configuration in congestion control configuration
+            configuration.RedisConfiguration.Should().NotBeNull();
 
-            static CongestionControlConfiguration _configuration;
+            // And it should add Redis connection multiplexer to the services collection
+            services.Any(service => service.ServiceType == typeof(IConnectionMultiplexer))
+                .Should().BeTrue();
 
-            static IServiceCollection _services = new ServiceCollection();
+            // And it should add Redis token bucket consumer to the services collection
+            services.Any(service =>
+                service.ServiceType == typeof(ITokenBucketConsumer) &&
+                service.ImplementationType == typeof(RedisTokenBucketConsumer)).Should().BeTrue();
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_redis_server_configuration_is_configured
+        [Fact(DisplayName = "Concurrent Request Limiter Is Configured")]
+        public void ConcurrentRequestLimiterIsConfigured()
         {
-            Because of = () =>
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When concurrent request limiter is added explicitly
+            services.AddCongestionControl(options =>
             {
-                _services.AddCongestionControl(options =>
-                {
-                    options.AddRedisStorage("127.0.0.1:6379");
-                    _configuration = options;
-                });
-            };
+                options.AddConcurrentRequestLimiter();
+                configuration = options;
+            });
 
-            It should_set_redis_server_configuration_in_congestion_control_configuration = () =>
-            {
-                _configuration.RedisConfiguration.ShouldNotBeNull();
-            };
+            // Then it should add concurrent request limiter configuration to the service collection
+            services.Any(service => service.ServiceType == typeof(ConcurrentRequestLimiterConfiguration))
+                .Should().BeTrue();
 
-            It should_add_redis_connection_multiplexer_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IConnectionMultiplexer))
-                    .ShouldBeTrue();
-            };
-
-            It should_add_redis_concurrent_request_tracker_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) &&
-                                         service.ImplementationType == typeof(RedisConcurrentRequestsManager))
-                    .ShouldBeTrue();
-            };
-
-            It should_add_redis_token_bucket_consumer_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(ITokenBucketConsumer) &&
-                                         service.ImplementationType == typeof(RedisTokenBucketConsumer))
-                    .ShouldBeTrue();
-            };
-
-            static CongestionControlConfiguration _configuration;
-
-            static IServiceCollection _services = new ServiceCollection();
+            // And it should add in-memory concurrent request manager to the service collection
+            services.Any(service =>
+                service.ServiceType == typeof(IConcurrentRequestsManager) &&
+                service.ImplementationType == typeof(InMemoryConcurrentRequestsManager)).Should().BeTrue();
         }
 
-        [Subject(typeof(ServiceCollectionExtensions), "Service Collection Extensions"), Tags("Positive Test")]
-        public class When_redis_server_configuration_is_not_configured
+        [Fact(DisplayName = "Concurrent Request Limiter Is Configured With Redis Server")]
+        public void ConcurrentRequestLimiterIsConfiguredWithRedisServer()
         {
-            Because of = () =>
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When adding concurrent request limiter with Redis server
+            services.AddCongestionControl(options =>
             {
-                _services.AddCongestionControl(options =>
-                {
-                    _configuration = options;
-                });
-            };
+                options.AddRedisStorage("127.0.0.1:6379");
+                options.AddConcurrentRequestLimiter();
+                configuration = options;
+            });
 
-            It should_not_set_redis_server_configuration_in_congestion_control_configuration = () =>
+            // Then it should set Redis server configuration in congestion control configuration
+            configuration.RedisConfiguration.Should().NotBeNull();
+
+            // And it should add Redis connection multiplexer to the services collection
+            services.Any(service => service.ServiceType == typeof(IConnectionMultiplexer))
+                .Should().BeTrue();
+
+            // And it should add Redis concurrent request manager to the services collection
+            services.Any(service =>
+                service.ServiceType == typeof(IConcurrentRequestsManager) &&
+                service.ImplementationType == typeof(RedisConcurrentRequestsManager)).Should().BeTrue();
+        }
+
+        [Fact(DisplayName = "Redis Server Configuration Is Not Provided")]
+        public void RedisServerConfigurationIsNotProvided()
+        {
+            // Given
+            var services = new ServiceCollection();
+            CongestionControlConfiguration configuration = null;
+
+            // When Redis server configuration is not provided
+            services.AddCongestionControl(options =>
             {
-                _configuration.RedisConfiguration.ShouldBeNull();
-            };
+                configuration = options;
+            });
 
-            It should_not_add_redis_connection_multiplexer_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IConnectionMultiplexer))
-                    .ShouldBeFalse();
-            };
+            // Then it should not set Redis server configuration in congestion control configuration
+            configuration.RedisConfiguration.Should().BeNull();
 
-            It should_add_in_memory_concurrent_request_tracker_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(IConcurrentRequestsManager) &&
-                                         service.ImplementationType == typeof(InMemoryConcurrentRequestsManager))
-                    .ShouldBeTrue();
-            };
+            // And it should not add Redis connection multiplexer to the services collection
+            services.Any(service => service.ServiceType == typeof(IConnectionMultiplexer))
+                .Should().BeFalse();
 
-            It should_add_in_memory_token_bucket_consumer_to_the_service_collection = () =>
-            {
-                _services.Any(service => service.ServiceType == typeof(ITokenBucketConsumer) &&
-                                         service.ImplementationType == typeof(InMemoryTokenBucketConsumer))
-                    .ShouldBeTrue();
-            };
+            // And it should not add Redis concurrent request tracker to the services collection
+            services.Any(service =>
+                service.ServiceType == typeof(IConcurrentRequestsManager) &&
+                service.ImplementationType == typeof(RedisConcurrentRequestsManager)).Should().BeFalse();
 
-            static CongestionControlConfiguration _configuration;
+            // And it should not add Redis token bucket consumer to the services collection
+            services.Any(service =>
+                service.ServiceType == typeof(ITokenBucketConsumer) &&
+                service.ImplementationType == typeof(RedisTokenBucketConsumer)).Should().BeFalse();
+        }
+    }
 
-            static IServiceCollection _services = new ServiceCollection();
+    public class CustomClientIdentifierProvider : IClientIdentifierProvider
+    {
+        public Task<string> ExecuteAsync(HttpContext httpContext)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class CustomHttpResponseFormatter : IHttpResponseFormatter
+    {
+        public Task FormatAsync(HttpContext httpContext, RateLimitContext rateLimitContext)
+        {
+            throw new NotImplementedException();
         }
     }
 }

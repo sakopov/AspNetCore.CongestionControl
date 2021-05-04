@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HeaderBasedClientIdentifierProvider.cs">
+// <copyright file="QueryStringBasedClientIdentifierProvider.cs">
 //   Copyright (c) 2018-2021 Sergey Akopov
 //
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,39 +29,39 @@ namespace AspNetCore.CongestionControl
     using Microsoft.AspNetCore.Http;
 
     /// <summary>
-    /// The client identifier provider which looks at the configured
-    /// header in the incoming request to get client identifier.
+    /// The client identifier provider which looks at the query
+    /// string in the incoming request to get client api key/identifier.
     /// </summary>
-    public class HeaderBasedClientIdentifierProvider : IClientIdentifierProvider
+    public class QueryBasedClientIdentifierProvider : IClientIdentifierProvider
     {
         /// <summary>
-        /// The default name of the header that contains client api key/identifier.
+        /// The default name of the query string parameter that contains client api key/identifier.
         /// </summary>
-        private const string DefaultHeaderName = "x-api-key";
+        private const string DefaultQueryStringParameter = "api_key";
 
         /// <summary>
-        /// The name of the header containing client api key/identifier.
+        /// The name of the query string parameter containing client api key/identifier.
         /// </summary>
-        private readonly string _headerName;
+        private readonly string _queryStringParameter;
 
         /// <summary>
-        /// Initializes a new instance of <see cref="HeaderBasedClientIdentifierProvider"/> class.
+        /// Initializes a new instance of <see cref="QueryBasedClientIdentifierProvider"/> class.
         /// </summary>
-        /// <param name="headerName">
-        /// The name of the header containing client api key/identifier.
+        /// <param name="queryStringParameter">
+        /// The name of the query string parameter containing client api key/identifier.
         /// </param>
-        public HeaderBasedClientIdentifierProvider(string headerName = DefaultHeaderName)
+        public QueryBasedClientIdentifierProvider(string queryStringParameter = DefaultQueryStringParameter)
         {
-            if (string.IsNullOrEmpty(headerName))
+            if (string.IsNullOrEmpty(queryStringParameter))
             {
-                throw new ArgumentNullException(nameof(headerName));
+                throw new ArgumentNullException(nameof(queryStringParameter));
             }
 
-            _headerName = headerName;
+            _queryStringParameter = queryStringParameter;
         }
 
         /// <summary>
-        /// Retrieves client api key/identifier from headers.
+        /// Retrieves client api key/identifier from query string.
         /// </summary>
         /// <param name="httpContext">
         /// The context for current HTTP request.
@@ -73,7 +73,7 @@ namespace AspNetCore.CongestionControl
         {
             string clientId = null;
 
-            if (httpContext?.Request?.Headers?.TryGetValue(_headerName, out var value) ?? false)
+            if (httpContext?.Request?.Query?.TryGetValue(_queryStringParameter, out var value) ?? false)
             {
                 clientId = value.ToString();
             }

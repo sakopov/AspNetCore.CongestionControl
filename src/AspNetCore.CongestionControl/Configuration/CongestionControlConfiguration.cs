@@ -1,17 +1,17 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="CongestionControlConfiguration.cs">
-//   Copyright (c) 2018 Sergey Akopov
-//   
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
 //   of this software and associated documentation files (the "Software"), to deal
 //   in the Software without restriction, including without limitation the rights
 //   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //   copies of the Software, and to permit persons to whom the Software is
 //   furnished to do so, subject to the following conditions:
-//   
+//
 //   The above copyright notice and this permission notice shall be included in
 //   all copies or substantial portions of the Software.
-//   
+//
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,6 +25,7 @@
 namespace AspNetCore.CongestionControl.Configuration
 {
     using System;
+    using System.Collections.Generic;
 
     /// <summary>
     /// The top-level configuration class responsible for configuring
@@ -46,11 +47,11 @@ namespace AspNetCore.CongestionControl.Configuration
         /// Gets the concurrent request limiter configuration.
         /// </summary>
         internal ConcurrentRequestLimiterConfiguration ConcurrentRequestLimiterConfiguration { get; private set; }
-        
+
         /// <summary>
-        /// Gets or sets the client identifier provider.
+        /// Gets or sets the client identifier providers.
         /// </summary>
-        internal IClientIdentifierProvider ClientIdentifierProvider { get; set; }
+        internal IList<IClientIdentifierProvider> ClientIdentifierProviders { get; set; } = new List<IClientIdentifierProvider>();
 
         /// <summary>
         /// Gets or sets the HTTP response formatter.
@@ -62,6 +63,13 @@ namespace AspNetCore.CongestionControl.Configuration
         /// request is rate limited. The default value is HTTP 429/Too Many Requests.
         /// </summary>
         public int HttpStatusCode { get; set; } = 429;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether anonymous clients are allowed. If
+        /// set to false, anonymous clients will result in HTTP 401/Unauthorized response.
+        /// The default value is <c>true</c>.
+        /// </summary>
+        public bool AllowAnonymousClients { get; set; } = true;
 
         /// <summary>
         /// Adds request rate limiter using default configuration options.
@@ -154,7 +162,37 @@ namespace AspNetCore.CongestionControl.Configuration
         /// </param>
         public void AddHeaderBasedClientIdentifierProvider(string headerName)
         {
-            ClientIdentifierProvider = new HeaderBasedClientIdentifierProvider(headerName);
+            ClientIdentifierProviders.Add(new HeaderBasedClientIdentifierProvider(headerName));
+        }
+
+        /// <summary>
+        /// Adds header-based client identifier provider using the default `x-api-key`
+        /// header name to retrieve unique client identifier.
+        /// </summary>
+        public void AddHeaderBasedClientIdentifierProvider()
+        {
+            ClientIdentifierProviders.Add(new HeaderBasedClientIdentifierProvider());
+        }
+
+        /// <summary>
+        /// Adds query-based client identifier provider using the specified
+        /// query string parameter name to retrieve unique client identifier.
+        /// </summary>
+        /// <param name="parameterName">
+        /// The name of the query string parameter containing client identifier.
+        /// </param>
+        public void AddQueryBasedClientIdentifierProvider(string parameterName)
+        {
+            ClientIdentifierProviders.Add(new QueryBasedClientIdentifierProvider(parameterName));
+        }
+
+        /// <summary>
+        /// Adds query-based client identifier provider using the default `api_key`
+        /// query string parameter to retrieve unique client identifier.
+        /// </summary>
+        public void AddQueryBasedClientIdentifierProvider()
+        {
+            ClientIdentifierProviders.Add(new QueryBasedClientIdentifierProvider());
         }
 
         /// <summary>
@@ -166,7 +204,7 @@ namespace AspNetCore.CongestionControl.Configuration
         /// <exception cref="ArgumentNullException"></exception>
         public void AddClientIdentifierProvider(IClientIdentifierProvider clientIdentifierProvider)
         {
-            ClientIdentifierProvider = clientIdentifierProvider ?? throw new ArgumentNullException(nameof(clientIdentifierProvider));
+            ClientIdentifierProviders.Add(clientIdentifierProvider ?? throw new ArgumentNullException(nameof(clientIdentifierProvider)));
         }
 
         /// <summary>

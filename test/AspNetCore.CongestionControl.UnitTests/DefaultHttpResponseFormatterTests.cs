@@ -1,40 +1,54 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="DefaultHttpResponseFormatterTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Machine.Specifications;
-    using Microsoft.AspNetCore.Http;
     using System.Net;
+    using Microsoft.AspNetCore.Http;
+    using FluentAssertions;
+    using Xunit;
 
-    class DefaultHttpResponseFormatterTests
+    public class DefaultHttpResponseFormatterTests
     {
-        [Subject(typeof(DefaultHttpResponseFormatter), "Default HTTP Response Formatter"), Tags("Positive Test")]
-        public class When_formatting_rate_limit_response
+        [Fact(DisplayName = "Happy Path")]
+        public async void HappyPath()
         {
-            Establish context = () =>
-            {
-                _httpContext = new DefaultHttpContext();
-                _httpContext.Request.ContentType = "application/json";
+            // Given
+            var formatter = new DefaultHttpResponseFormatter();
+            var rateLimitContext = new RateLimitContext(10, 20, HttpStatusCode.ServiceUnavailable, "source");
 
-                _rateLimitContext = new RateLimitContext(10, 20, HttpStatusCode.ServiceUnavailable, "source");
-            };
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.ContentType = "application/json";
 
-            Because of = () =>
-            {
-                _formatter.FormatAsync(_httpContext, _rateLimitContext).Await();
-            };
+            // When formatter is executed
+            await formatter.FormatAsync(httpContext, rateLimitContext);
 
-            It should_set_the_response_content_type_to_request_content_type = () =>
-            {
-                _httpContext.Response.ContentType.ShouldEqual(_httpContext.Request.ContentType);
-            };
+            // Then it should set the response content type to request content type
+            httpContext.Response.ContentType.Should().Be(httpContext.Request.ContentType);
 
-            It should_set_the_response_status_code_to_configured_http_status_code = () =>
-            {
-                _httpContext.Response.StatusCode.ShouldEqual((int)_rateLimitContext.HttpStatusCode);
-            };
-
-            static RateLimitContext _rateLimitContext;
-            static HttpContext _httpContext = new DefaultHttpContext();
-            static DefaultHttpResponseFormatter _formatter = new DefaultHttpResponseFormatter();
+            // And it should set the response status code to configured HTTP status code
+            httpContext.Response.StatusCode.Should().Be((int)rateLimitContext.HttpStatusCode);
         }
     }
 }

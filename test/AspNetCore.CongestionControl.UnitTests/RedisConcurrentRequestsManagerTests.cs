@@ -1,229 +1,201 @@
-﻿namespace AspNetCore.CongestionControl.UnitTests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="RedisConcurrentRequestsManagerTests.cs">
+//   Copyright (c) 2018-2021 Sergey Akopov
+//
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files (the "Software"), to deal
+//   in the Software without restriction, including without limitation the rights
+//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//   copies of the Software, and to permit persons to whom the Software is
+//   furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in
+//   all copies or substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//   THE SOFTWARE.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    using Configuration;
-    using Machine.Specifications;
+    using System;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.Internal;
+    using Configuration;
+    using FluentAssertions;
     using Moq;
     using StackExchange.Redis;
-    using System;
-    using It = Machine.Specifications.It;
+    using Xunit;
 
-    class RedisConcurrentRequestsManagerTests
+    // TODO: Add more test coverage!
+    // Not a lot of test coverage yet because it doesn't seem to be
+    // possible to mock RedisResult in StackExchange.Redis library.
+    // However, this is going to be available in version 2.0 which
+    // is currently in alpha.
+    // https://github.com/StackExchange/StackExchange.Redis/issues/856
+    public class RedisConcurrentRequestsManagerTests
     {
-        // Not a lot of test coverage yet because it doesn't seem to be
-        // possible to mock RedisResult in StackExchange.Redis library.
-        // However, this is going to be available in version 2.0 which
-        // is currently in alpha.
-        // https://github.com/StackExchange/StackExchange.Redis/issues/856
-
-        [Subject(typeof(RedisConcurrentRequestsManager), "Redis Concurrent Requests Manager"), Tags("Negative Test")]
-        public class When_an_unexpected_exception_is_thrown_by_redis_during_add
+        [Fact(DisplayName = "Unexpected Exception Thrown By Redis During Add")]
+        public async void UnexpectedExceptionThrownByRedisDuringAdd()
         {
-            Establish context = () =>
-            {
-                var connectionMultplexerMock = new Mock<IConnectionMultiplexer>();
-                _configuration = new ConcurrentRequestLimiterConfiguration();
-                _loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
+            // Given
+            var connectionMultiplexerMock = new Mock<IConnectionMultiplexer>();
+            var configuration = new ConcurrentRequestLimiterConfiguration();
+            var loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
 
-                connectionMultplexerMock.Setup(mock => mock.GetDatabase(
-                        Moq.It.IsAny<int>(),
-                        Moq.It.IsAny<object>()))
-                    .Throws<Exception>();
+            connectionMultiplexerMock.Setup(mock => mock.GetDatabase(
+                    Moq.It.IsAny<int>(),
+                    Moq.It.IsAny<object>()))
+                .Throws<Exception>();
 
-                _manager = new RedisConcurrentRequestsManager(
-                    connectionMultplexerMock.Object,
-                    _configuration,
-                    _loggerMock.Object);
-            };
+            var manager = new RedisConcurrentRequestsManager(
+                connectionMultiplexerMock.Object,
+                configuration,
+                loggerMock.Object);
 
-            Because of = () =>
-            {
-                _result = _manager.AddAsync(
-                    Guid.NewGuid().ToString(),
-                    Guid.NewGuid().ToString(),
-                    1).Await();
-            };
+            // When a request is added
+            var result = await manager.AddAsync(
+                Guid.NewGuid().ToString(),
+                Guid.NewGuid().ToString(),
+                1);
 
-            It should_log_a_warning = () =>
-            {
-                _loggerMock.Verify(mock => mock.Log(
-                    LogLevel.Warning,
-                    Moq.It.IsAny<EventId>(),
-                    Moq.It.IsAny<FormattedLogValues>(),
-                    Moq.It.IsAny<Exception>(),
-                    Moq.It.IsAny<Func<object, Exception, string>>()));
-            };
+            // Then it should log a warning
+            loggerMock.Verify(mock => mock.Log(
+                LogLevel.Warning,
+                Moq.It.IsAny<EventId>(),
+                Moq.It.IsAny<FormattedLogValues>(),
+                Moq.It.IsAny<Exception>(),
+                Moq.It.IsAny<Func<object, Exception, string>>()));
 
-            It should_allow_the_request = () =>
-            {
-                _result.IsAllowed.ShouldBeTrue();
-                _result.Limit.ShouldEqual(_configuration.Capacity);
-                _result.Remaining.ShouldEqual(_configuration.Capacity - 1);
-            };
-
-            static AddConcurrentRequestResult _result;
-            static RedisConcurrentRequestsManager _manager;
-            static Mock<ILogger<RedisConcurrentRequestsManager>> _loggerMock;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // And it should allow the request
+            result.IsAllowed.Should().BeTrue();
+            result.Limit.Should().Be(configuration.Capacity);
+            result.Remaining.Should().Be(configuration.Capacity - 1);
         }
 
-        [Subject(typeof(RedisConcurrentRequestsManager), "Redis Concurrent Requests Manager"), Tags("Negative Test")]
-        public class When_an_unexpected_exception_is_thrown_by_redis_during_remove
+        [Fact(DisplayName = "Unexpected Exception Thrown By Redis During Remove")]
+        public async void UnexpectedExceptionThrownByRedisDuringRemove()
         {
-            Establish context = () =>
-            {
-                var connectionMultplexerMock = new Mock<IConnectionMultiplexer>();
-                _configuration = new ConcurrentRequestLimiterConfiguration();
-                _loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
+            // Given
+            var connectionMultplexerMock = new Mock<IConnectionMultiplexer>();
+            var configuration = new ConcurrentRequestLimiterConfiguration();
+            var loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
 
-                connectionMultplexerMock.Setup(mock => mock.GetDatabase(
-                        Moq.It.IsAny<int>(),
-                        Moq.It.IsAny<object>()))
-                    .Throws<Exception>();
+            connectionMultplexerMock.Setup(mock => mock.GetDatabase(
+                    Moq.It.IsAny<int>(),
+                    Moq.It.IsAny<object>()))
+                .Throws<Exception>();
 
-                _manager = new RedisConcurrentRequestsManager(
-                    connectionMultplexerMock.Object,
-                    _configuration,
-                    _loggerMock.Object);
-            };
+            var manager = new RedisConcurrentRequestsManager(
+                connectionMultplexerMock.Object,
+                configuration,
+                loggerMock.Object);
 
-            Because of = () =>
-            {
-                _result = _manager.RemoveAsync(
-                    Guid.NewGuid().ToString(),
-                    Guid.NewGuid().ToString()).Await();
-            };
+            // When a request is removed
+            var result = await manager.RemoveAsync(
+                Guid.NewGuid().ToString(),
+                Guid.NewGuid().ToString());
 
-            It should_log_a_warning = () =>
-            {
-                _loggerMock.Verify(mock => mock.Log(
-                    LogLevel.Warning,
-                    Moq.It.IsAny<EventId>(),
-                    Moq.It.IsAny<FormattedLogValues>(),
-                    Moq.It.IsAny<Exception>(),
-                    Moq.It.IsAny<Func<object, Exception, string>>()));
-            };
+            // Then it should log a warning
+            loggerMock.Verify(mock => mock.Log(
+                LogLevel.Warning,
+                Moq.It.IsAny<EventId>(),
+                Moq.It.IsAny<FormattedLogValues>(),
+                Moq.It.IsAny<Exception>(),
+                Moq.It.IsAny<Func<object, Exception, string>>()));
 
-            It should_return_false = () =>
-            {
-                _result.ShouldBeFalse();
-            };
-
-            static bool _result;
-            static RedisConcurrentRequestsManager _manager;
-            static Mock<ILogger<RedisConcurrentRequestsManager>> _loggerMock;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // And it should return false
+            result.Should().BeFalse();
         }
 
-        [Subject(typeof(RedisConcurrentRequestsManager), "Redis Concurrent Requests Manager"), Tags("Positive Test")]
-        public class When_a_request_is_successfully_removed
+        [Fact(DisplayName = "Request Is Successfully Removed")]
+        public async void RequestIsSuccessfullyRemoved()
         {
-            Establish context = () =>
-            {
-                var connectionMultplexerMock = new Mock<IConnectionMultiplexer>();
-                var databaseMock = new Mock<IDatabase>();
-                _configuration = new ConcurrentRequestLimiterConfiguration();
-                _loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
+            // Given
+            var connectionMultplexerMock = new Mock<IConnectionMultiplexer>();
+            var databaseMock = new Mock<IDatabase>();
+            var configuration = new ConcurrentRequestLimiterConfiguration();
+            var loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
 
-                databaseMock.Setup(mock => mock.SortedSetRemoveAsync(
-                        Moq.It.IsAny<RedisKey>(),
-                        Moq.It.IsAny<RedisValue>(),
-                        Moq.It.IsAny<CommandFlags>()))
-                    .ReturnsAsync(true);
+            databaseMock.Setup(mock => mock.SortedSetRemoveAsync(
+                    Moq.It.IsAny<RedisKey>(),
+                    Moq.It.IsAny<RedisValue>(),
+                    Moq.It.IsAny<CommandFlags>()))
+                .ReturnsAsync(true);
 
-                connectionMultplexerMock.Setup(mock => mock.GetDatabase(
-                        Moq.It.IsAny<int>(),
-                        Moq.It.IsAny<object>()))
-                    .Returns(databaseMock.Object);
+            connectionMultplexerMock.Setup(mock => mock.GetDatabase(
+                    Moq.It.IsAny<int>(),
+                    Moq.It.IsAny<object>()))
+                .Returns(databaseMock.Object);
 
-                _manager = new RedisConcurrentRequestsManager(
-                    connectionMultplexerMock.Object,
-                    _configuration,
-                    _loggerMock.Object);
-            };
+            var manager = new RedisConcurrentRequestsManager(
+                connectionMultplexerMock.Object,
+                configuration,
+                loggerMock.Object);
 
-            Because of = () =>
-            {
-                _result = _manager.RemoveAsync(
-                    Guid.NewGuid().ToString(),
-                    Guid.NewGuid().ToString()).Await();
-            };
+            // When a request is removed
+            var result = await manager.RemoveAsync(
+                Guid.NewGuid().ToString(),
+                Guid.NewGuid().ToString());
 
-            It should_log_a_debug_message = () =>
-            {
-                _loggerMock.Verify(mock => mock.Log(
-                    LogLevel.Debug,
-                    Moq.It.IsAny<EventId>(),
-                    Moq.It.IsAny<FormattedLogValues>(),
-                    Moq.It.IsAny<Exception>(),
-                    Moq.It.IsAny<Func<object, Exception, string>>()));
-            };
+            // Then it should log a debug message
+            loggerMock.Verify(mock => mock.Log(
+                LogLevel.Debug,
+                Moq.It.IsAny<EventId>(),
+                Moq.It.IsAny<FormattedLogValues>(),
+                Moq.It.IsAny<Exception>(),
+                Moq.It.IsAny<Func<object, Exception, string>>()));
 
-            It should_return_false = () =>
-            {
-                _result.ShouldBeTrue();
-            };
-
-            static bool _result;
-            static RedisConcurrentRequestsManager _manager;
-            static Mock<ILogger<RedisConcurrentRequestsManager>> _loggerMock;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // And it should return true
+            result.Should().BeTrue();
         }
 
-        [Subject(typeof(RedisConcurrentRequestsManager), "Redis Concurrent Requests Manager"), Tags("Negative Test")]
-        public class When_a_request_is_not_removed
+        [Fact(DisplayName = "Request Is Not Removed")]
+        public async void RequestIsNotRemoved()
         {
-            Establish context = () =>
-            {
-                var connectionMultplexerMock = new Mock<IConnectionMultiplexer>();
-                var databaseMock = new Mock<IDatabase>();
-                _configuration = new ConcurrentRequestLimiterConfiguration();
-                _loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
+            // Given
+            var connectionMultplexerMock = new Mock<IConnectionMultiplexer>();
+            var databaseMock = new Mock<IDatabase>();
+            var configuration = new ConcurrentRequestLimiterConfiguration();
+            var loggerMock = new Mock<ILogger<RedisConcurrentRequestsManager>>();
 
-                databaseMock.Setup(mock => mock.SortedSetRemoveAsync(
-                        Moq.It.IsAny<RedisKey>(),
-                        Moq.It.IsAny<RedisValue>(),
-                        Moq.It.IsAny<CommandFlags>()))
-                    .ReturnsAsync(false);
+            databaseMock.Setup(mock => mock.SortedSetRemoveAsync(
+                    Moq.It.IsAny<RedisKey>(),
+                    Moq.It.IsAny<RedisValue>(),
+                    Moq.It.IsAny<CommandFlags>()))
+                .ReturnsAsync(false);
 
-                connectionMultplexerMock.Setup(mock => mock.GetDatabase(
-                        Moq.It.IsAny<int>(),
-                        Moq.It.IsAny<object>()))
-                    .Returns(databaseMock.Object);
+            connectionMultplexerMock.Setup(mock => mock.GetDatabase(
+                    Moq.It.IsAny<int>(),
+                    Moq.It.IsAny<object>()))
+                .Returns(databaseMock.Object);
 
-                _manager = new RedisConcurrentRequestsManager(
-                    connectionMultplexerMock.Object,
-                    _configuration,
-                    _loggerMock.Object);
-            };
+            var manager = new RedisConcurrentRequestsManager(
+                connectionMultplexerMock.Object,
+                configuration,
+                loggerMock.Object);
 
-            Because of = () =>
-            {
-                _result = _manager.RemoveAsync(
-                    Guid.NewGuid().ToString(),
-                    Guid.NewGuid().ToString()).Await();
-            };
+            // When a request is removed
+            var result = await manager.RemoveAsync(
+                Guid.NewGuid().ToString(),
+                Guid.NewGuid().ToString());
 
-            It should_log_a_debug_message = () =>
-            {
-                _loggerMock.Verify(mock => mock.Log(
-                    LogLevel.Debug,
-                    Moq.It.IsAny<EventId>(),
-                    Moq.It.IsAny<FormattedLogValues>(),
-                    Moq.It.IsAny<Exception>(),
-                    Moq.It.IsAny<Func<object, Exception, string>>()));
-            };
+            // Then it should log a debug message
+            loggerMock.Verify(mock => mock.Log(
+                LogLevel.Debug,
+                Moq.It.IsAny<EventId>(),
+                Moq.It.IsAny<FormattedLogValues>(),
+                Moq.It.IsAny<Exception>(),
+                Moq.It.IsAny<Func<object, Exception, string>>()));
 
-            It should_return_false = () =>
-            {
-                _result.ShouldBeFalse();
-            };
-
-            static bool _result;
-            static RedisConcurrentRequestsManager _manager;
-            static Mock<ILogger<RedisConcurrentRequestsManager>> _loggerMock;
-            static ConcurrentRequestLimiterConfiguration _configuration;
+            // And it should return false
+            result.Should().BeFalse();
         }
     }
 }

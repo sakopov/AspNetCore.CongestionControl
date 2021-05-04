@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SkipListNodeLevel.cs">
+// <copyright file="HttpContextItemsDictionaryExtensionsTests.cs">
 //   Copyright (c) 2018-2021 Sergey Akopov
 //
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,21 +22,38 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace AspNetCore.CongestionControl.SortedSet
+namespace AspNetCore.CongestionControl.UnitTests
 {
-    /// <summary>
-    /// The skip list node level.
-    /// </summary>
-    public class SkipListNodeLevel
-    {
-        /// <summary>
-        /// Gets or sets the forward node.
-        /// </summary>
-        public SkipListNode Forward { get; set; }
+    using System.Collections.Generic;
+    using FluentAssertions;
+    using Xunit;
 
-        /// <summary>
-        /// Gets or sets the number of nodes spanned at current level.
-        /// </summary>
-        public long Span { get; set; }
+    public class HttpContextItemsDictionaryExtensionsTests
+    {
+        [Fact(DisplayName = "Adding Client ID")]
+        public void AddingClientId()
+        {
+            // Given
+            var items = new Dictionary<object, object>();
+
+            // When client ID is added
+            items.AddClientId("client-id");
+
+            // Then it can be retrieved
+            items.GetClientId().Should().Be("client-id");
+        }
+
+        [Fact(DisplayName = "Client ID Does Not Exist")]
+        public void ClientIdDoesNotExist()
+        {
+            // Given
+            var items = new Dictionary<object, object>();
+
+            // When client ID is retrieved
+            var clientId = items.GetClientId();
+
+            // Then it should return null
+            clientId.Should().BeNull();
+        }
     }
 }

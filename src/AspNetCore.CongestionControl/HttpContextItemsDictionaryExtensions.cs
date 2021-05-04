@@ -1,5 +1,5 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IConcurrentRequestsManager.cs">
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ServiceCollectionExtensions.cs">
 //   Copyright (c) 2018-2021 Sergey Akopov
 //
 //   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,45 +24,50 @@
 
 namespace AspNetCore.CongestionControl
 {
-    using System.Threading.Tasks;
+    using System.Collections.Generic;
+    using Microsoft.AspNetCore.Http;
 
     /// <summary>
-    /// The contract for concurrent requests manager responsible for tracking
-    /// the number of simultaneously-executing requests per client and identifying
-    /// if a client exceeds the capacity.
+    /// Implements extension methods for the items dictionary in the <see cref="HttpContext" /> class.
     /// </summary>
-    public interface IConcurrentRequestsManager
+    internal static class HttpContextItemsDictionaryExtensions
     {
         /// <summary>
-        /// Adds a new client request to the manager, if it isn't exceeding
-        /// the capacity.
+        /// The name of the key in items dictionary used to store client identifier.
         /// </summary>
-        /// <param name="clientId">
-        /// The identifier of the client which initiated the request.
-        /// </param>
-        /// <param name="requestId">
-        /// The request identifier.
-        /// </param>
-        /// <param name="timestamp">
-        /// The timestamp of the request.
-        /// </param>
-        /// <returns>
-        /// The <see cref="AddConcurrentRequestResult"/> instance containing the response.
-        /// </returns>
-        Task<AddConcurrentRequestResult> AddAsync(string clientId, string requestId, long timestamp);
+        private const string CongestionControlClientIdKey = "CongestionControlClientId";
 
         /// <summary>
-        /// Removes an existing request from the manager.
+        /// Adds client identifier to the items dictionary in the <see cref="HttpContext" /> class.
         /// </summary>
-        /// <param name="clientId">
-        /// The identifier of the client which initiated the request.
+        /// <param name="items">
+        /// The items dictionary.
         /// </param>
-        /// <param name="requestId">
-        /// The request identifier.
+        /// <param name="clientId">
+        /// The client identifier to add.
+        /// </param>
+        public static void AddClientId(this IDictionary<object, object> items, string clientId)
+        {
+            items.Add(CongestionControlClientIdKey, clientId);
+        }
+
+        /// <summary>
+        /// Gets client identifier from the items dictionary in the <see cref="HttpContext" /> class.
+        /// </summary>
+        /// <param name="items">
+        /// The items dictionary.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the request was removed. Otherwise, <c>false</c>.
+        /// The client identifier.
         /// </returns>
-        Task<bool> RemoveAsync(string clientId, string requestId);
+        public static string GetClientId(this IDictionary<object, object> items)
+        {
+            if (items.TryGetValue(CongestionControlClientIdKey, out object value))
+            {
+                return (string)value;
+            }
+
+            return null;
+        }
     }
 }
