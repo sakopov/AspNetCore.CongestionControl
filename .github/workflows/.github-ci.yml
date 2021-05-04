@@ -12,9 +12,6 @@ env:
   UNIT_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.UnitTests/AspNetCore.CongestionControl.UnitTests.csproj"
   INTEGRATION_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.IntegrationTests/AspNetCore.CongestionControl.IntegrationTests.csproj"
 
-  # GitHub settings
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # Official NuGet Feed settings
   NUGET_FEED: https://api.nuget.org/v3/index.json
   NUGET_KEY: ${{ secrets.NUGET_KEY }}
@@ -22,7 +19,7 @@ env:
 jobs:
   prepare:
     name: Prepare
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
 
     steps:
     - name: Setup .NET on CI runner
@@ -58,20 +55,19 @@ jobs:
       id: version
       uses: hennejg/github-tag-action@v4.2.4
       with:
-        release_branches: master
-        github_token: $GITHUB_TOKEN
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Package
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       run: dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_version }} $PROJECT_PATH
-    
+
     - name: Upload Artifact
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v2
       with:
         name: nupkg
         path: ./nupkg/*.nupkg
-  
+
   publish:
     needs: build
     name: Publish
