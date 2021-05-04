@@ -11,7 +11,7 @@ on:
 env:
   # Project paths
   PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
-  UNIT_TEST_BASE_PATH: "./AspNetCore.CongestionControl/AspNetCore.CongestionControl/test/AspNetCore.CongestionControl.UnitTests"
+  UNIT_TEST_BASE_PATH: "./test/AspNetCore.CongestionControl.UnitTests"
   UNIT_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.UnitTests/AspNetCore.CongestionControl.UnitTests.csproj"
   INTEGRATION_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.IntegrationTests/AspNetCore.CongestionControl.IntegrationTests.csproj"
 
