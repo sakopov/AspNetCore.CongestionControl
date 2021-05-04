@@ -1,7 +1,8 @@
 # Congestion Control for AspNet Core
 
 [![Build Status](https://github.com/sakopov/AspNetCore.CongestionControl/workflows/build/badge.svg)](https://github.com/sakopov/AspNetCore.CongestionControl)
-[![NuGet Pre Release](https://img.shields.io/nuget/vpre/AspNetCore.CongestionControl.svg)](https://www.nuget.org/packages/AspNetCore.CongestionControl)
+[![NuGet Release](https://img.shields.io/nuget/v/AspNetCore.CongestionControl.svg)](https://www.nuget.org/packages/AspNetCore.CongestionControl)
+[![Coverage Status](https://coveralls.io/repos/github/sakopov/AspNetCore.CongestionControl/badge.svg)](https://coveralls.io/github/sakopov/AspNetCore.CongestionControl)
 
 *Congestion control middleware components for ASPNET Core.*
 
@@ -241,9 +242,9 @@ public void ConfigureServices(IServiceCollection services)
 
 ## Distributed Storage with Redis
 
-By default, all middleware components will use in-memory storage. This might work for very basic usage and deployment scenarious. However, this type of storage is volatile due to high risk of data loss when the API recycles or restarts. For this, and other reasons, it's important to use high-performance, persistent storage alternative such as [Redis](https://redis.io/). 
+By default, all middleware components will use in-memory storage. This might work for very basic usage and deployment scenarious. However, this type of storage is volatile due to high risk of data loss when the API recycles or restarts. For this, and other reasons, it's important to use high-performance, persistent storage alternative such as [Redis](https://redis.io/).
 
-Use `AddRedisStorage` to configure the connection to your Redis instance. 
+Use `AddRedisStorage` to configure the connection to your Redis instance.
 
 > Note, since the library is using **StackExchange.Redis** to communicate with your Redis instance, you can refer to [this guide](https://stackexchange.github.io/StackExchange.Redis/Configuration#basic-configuration-strings) to read about various supported connection string formats.
 
