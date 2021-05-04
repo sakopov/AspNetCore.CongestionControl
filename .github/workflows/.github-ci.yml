@@ -51,7 +51,7 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ${{ UNIT_TEST_PROJECT_PATH }}/bin/Release/netcoreapp3.1/coverage/coverage.info
+        path-to-lcov: ${UNIT_TEST_PROJECT_PATH}/bin/Release/netcoreapp3.1/coverage/coverage.info
 
     - name: Start Redis
       uses: supercharge/redis-github-action@1.2.0
