@@ -48,8 +48,8 @@ jobs:
     - name: Unit Test
       id: unit-test-coverage
       run: |
-        dotnet test $UNIT_TEST_PROJECT_PATH -c Release --no-build /p:CollectCoverage=true /p:CoverletOutput=$UNIT_TEST_BASE_PATH/bin/Release/netcoreapp3.1/coverage/ /p:CoverletOutputFormat=lcov
-        echo "::set-output name=COVERAGE_FILE::$UNIT_TEST_BASE_PATH/bin/Release/netcoreapp3.1/coverage/coverage.info"
+        dotnet test $UNIT_TEST_PROJECT_PATH -c Release --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=lcov
+        echo "::set-output name=COVERAGE_FILE::$(find $UNIT_TEST_BASE_PATH -name 'coverage.info' -print)"
 
     - name: Publish Coverage Report to coveralls.io
       uses: coverallsapp/github-action@master
