@@ -1,7 +1,6 @@
 # Release Process
 
-[![Build Status](https://github.com/sakopov/AspNetCore.CongestionControl/workflows/build/badge.svg)](https://github.com/sakopov/AspNetCore.CongestionControl)
-[![NuGet Pre Release](https://img.shields.io/nuget/vpre/AspNetCore.CongestionControl.svg)](https://www.nuget.org/packages/AspNetCore.CongestionControl)
+The following steps are recommended in order to make a new release.
 
 1. Submit a pull request containing proposed changes. Note, commit messages have to follow semantic-release conventions as defined by [Angular Commit Message Conventions](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines).
 

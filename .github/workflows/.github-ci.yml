@@ -9,11 +9,10 @@ on:
       - published
 
 env:
-  # Project paths
-  PROJECT_PATH: "./src/AspNetCore.CongestionControl/AspNetCore.CongestionControl.csproj"
-  UNIT_TEST_BASE_PATH: "./test/AspNetCore.CongestionControl.UnitTests"
-  UNIT_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.UnitTests/AspNetCore.CongestionControl.UnitTests.csproj"
-  INTEGRATION_TEST_PROJECT_PATH: "./test/AspNetCore.CongestionControl.IntegrationTests/AspNetCore.CongestionControl.IntegrationTests.csproj"
+  # Project namespace
+  PROJECT_NAMESPACE: "AspNetCore.CongestionControl"
+  UNIT_TEST_NAMESPACE: "AspNetCore.CongestionControl.UnitTests"
+  INTEGRATION_TEST_NAMESPACE: "AspNetCore.CongestionControl.IntegrationTests"
 
   # Official NuGet Feed settings
   NUGET_FEED: https://api.nuget.org/v3/index.json
@@ -48,8 +47,8 @@ jobs:
     - name: Unit Test
       id: unit-test-coverage
       run: |
-        dotnet test $UNIT_TEST_PROJECT_PATH -c Release --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=lcov
-        echo "::set-output name=COVERAGE_FILE::$(find $UNIT_TEST_BASE_PATH -name 'coverage.info' -print)"
+        dotnet test ./test/$UNIT_TEST_NAMESPACE/$UNIT_TEST_NAMESPACE.csproj -c Release --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=lcov
+        echo "::set-output name=COVERAGE_FILE::$(find ./test/$UNIT_TEST_NAMESPACE -name 'coverage.info' -print)"
 
     - name: Publish Coverage Report to coveralls.io
       uses: coverallsapp/github-action@master
@@ -61,7 +60,7 @@ jobs:
       uses: supercharge/redis-github-action@1.2.0
 
     - name: Integration Test
-      run: dotnet test $INTEGRATION_TEST_PROJECT_PATH -c Release --no-build
+      run: dotnet test ./test/$INTEGRATION_TEST_NAMESPACE/$INTEGRATION_TEST_NAMESPACE.csproj -c Release --no-build
 
     - name: Version
       id: version
@@ -75,7 +74,7 @@ jobs:
         RELEASE_VERSION: ${{ steps.version.outputs.previous_tag }}
       run: |
         RELEASE_VERSION=${RELEASE_VERSION#?}
-        dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=$RELEASE_VERSION $PROJECT_PATH
+        dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=$RELEASE_VERSION ./src/$PROJECT_NAMESPACE/$PROJECT_NAMESPACE.csproj
 
     - name: Upload Artifact
       if: github.event_name == 'release'
