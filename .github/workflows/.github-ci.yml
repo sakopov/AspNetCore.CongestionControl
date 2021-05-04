@@ -2,9 +2,11 @@ name: build
 
 on:
   push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
+  release:
+    types:
+      - published
 
 env:
   # Project paths
@@ -58,11 +60,11 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Package
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      if: github.event_name == 'release'
       run: dotnet pack -v normal -c Release -o nupkg --no-restore --include-symbols --include-source -p:PackageVersion=${{ steps.version.outputs.new_version }} $PROJECT_PATH
 
     - name: Upload Artifact
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      if: github.event_name == 'release'
       uses: actions/upload-artifact@v2
       with:
         name: nupkg
@@ -72,7 +74,7 @@ jobs:
     needs: build
     name: Publish
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'release'
 
     steps:
       - name: Download Artifact
